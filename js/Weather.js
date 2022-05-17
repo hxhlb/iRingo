@@ -887,6 +887,62 @@ async function colorfulClouds(
 };
 
 /**
+ * Produce a object for `outputAQI()`
+ * @author WordlessEcho
+ * @param {Number} timestamp - UNIX timestamp when you get data
+ * @param {string} language - ISO 3166-1 language tag
+ * @param {Object} location - `{ latitude, longitude }`
+ * @param {Object} providerLogo - `{ forV2, forV1 }` logo of provider
+ * @param {string} providerName - provider name
+ * @param {String} url - URL to the website of AQI details
+ * @param {Object} pollutants - array of `{ name, amount, unit }`
+ * @param {String} sourceType - `station` or `modeled`
+ * @param {String} sourceName - will be displayed in the bottom of details
+ * @param {Number} aqi - AQI index
+ * @param {Number} yesterdayAqi - yesterday AQI index for comparison
+ * @param {String} scale - name of AQI standard
+ * @param {String} primaryPollutant - name of the primary pollutant
+ * @return {Object} object for `outputAQI()`
+ */
+ function toAqiObject(
+	timestamp = (+ new Date()),
+	language,
+	location,
+	providerLogo,
+	providerName,
+	url,
+	sourceType,
+	sourceName,
+	pollutants,
+	aqi,
+	scale,
+	primaryPollutant,
+) {
+	const aqiObject = {
+		timestamp,
+		language,
+		location,
+		providerLogo,
+		providerName,
+		url,
+		sourceType,
+		sourceName,
+		pollutants,
+		aqi,
+		yesterdayAqi,
+		scale,
+		primaryPollutant,
+	};
+
+	// $.log(
+	// 	`⚠️ ${$.name}, ${toAqiObject.name}: `,
+	// 	`aqiObject = ${JSON.stringify(aqiObject)}`, ''
+	// );
+
+	return aqiObject;
+}
+
+/**
  * Produce a object for `outputNextHour()`
  * @author WordlessEcho
  * @param {Number} timestamp - UNIX timestamp when you get data
