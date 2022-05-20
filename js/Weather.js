@@ -74,6 +74,11 @@ const EPA_454_AQI = {
 	VERY_HAZARDOUS: { LOWER: 401, UPPER: 500 },
 };
 
+const EPA_454_UNITS = {
+	"OZONE": "ppm", "OZONE_8H": "ppm", "PM2.5_24H": "microgramPerM3", "PM10_24H": "microgramPerM3",
+	"CO_8H": "ppm", "SO2": "ppb", "SO2_24H": "ppb", "NO2": "ppb",
+};
+
 const EPA_454_CONCENTRATIONS = {
 	"OZONE": {
 		// unit: ppm
@@ -152,6 +157,13 @@ const EPA_454_CONCENTRATIONS = {
 // https://www.mee.gov.cn/ywgz/fgbz/bz/bzwb/jcffbz/201203/W020120410332725219541.pdf
 const HJ_633_AQI_LEVEL = EPA_454_AQI_LEVEL;
 const HJ_633_AQI = EPA_454_AQI;
+
+const HJ_633_UNITS = {
+	"SO2_24H": "microgramPerM3", "SO2": "microgramPerM3", "NO2_24H": "microgramPerM3",
+	"NO2": "microgramPerM3", "PM10_24H": "microgramPerM3", "CO_24H": "milligramPerM3",
+	"CO": "milligramPerM3", "OZONE": "microgramPerM3", "OZONE_8H": "microgramPerM3",
+	"PM2.5_24H": "microgramPerM3",
+};
 
 const HJ_633_CONCENTRATIONS = {
 	"SO2_24H": {
@@ -256,6 +268,13 @@ const HJ_633_CONCENTRATIONS = {
 // https://aqicn.org/scale/
 const INSTANT_CAST_AQI_LEVEL = EPA_454_AQI_LEVEL;
 const INSTANT_CAST_AQI = EPA_454_AQI;
+
+const INSTANT_CAST_UNITS = {
+	...EPA_454_UNITS, "OZONE": "ppb", "PM2.5": EPA_454_UNITS["PM2.5_24H"],
+	"PM10": EPA_454_UNITS["PM10_24H"], "CO": EPA_454_UNITS["CO_8H"],
+	"OZONE_8H": undefined, "PM2.5_24H": undefined, "PM10_24H": undefined,
+	"CO_8H": undefined, "SO2_24H": undefined,
+};
 
 const INSTANT_CAST_CONCENTRATIONS = {
 	...EPA_454_CONCENTRATIONS,
