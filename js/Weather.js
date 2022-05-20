@@ -1680,6 +1680,20 @@ function calculateAQI(AQI) {
 	else return 6;
 };
 
+function toAqi(aqiBreakpoints, concentrationBreakpoints, pollutantName, pollutantValue) {
+	const breakpoints = Object.entries(concentrationBreakpoints[pollutantName]);
+
+	for (const [aqiLevel, concentrationRange] of breakpoints) {
+		if (pollutantValue <= concentrationRange.UPPER) {
+			const aqiRange = aqiBreakpoints[aqiLevel];
+			return Math.round(
+				(aqiRange.UPPER - aqiRange.LOWER) * (pollutantValue - concentrationRange.LOWER)
+					/ (concentrationRange.UPPER - concentrationRange.LOWER) + aqiRange.LOWER
+			);
+		}
+	};
+};
+
 /**
  * Calculate Precipitation Level
  * https://docs.caiyunapp.com/docs/tables/precip
