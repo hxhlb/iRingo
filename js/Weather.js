@@ -151,7 +151,6 @@ const EPA_454_CONCENTRATIONS = {
 
 // https://www.mee.gov.cn/ywgz/fgbz/bz/bzwb/jcffbz/201203/W020120410332725219541.pdf
 const HJ_633_AQI_LEVEL = EPA_454_AQI_LEVEL;
-
 const HJ_633_AQI = EPA_454_AQI;
 
 const HJ_633_CONCENTRATIONS = {
@@ -252,6 +251,33 @@ const HJ_633_CONCENTRATIONS = {
 		HAZARDOUS: { LOWER: 251, UPPER: 350 },
 		VERY_HAZARDOUS: { LOWER: 351, UPPER: 500 },
 	},
+};
+
+// https://aqicn.org/scale/
+const INSTANT_CAST_AQI_LEVEL = EPA_454_AQI_LEVEL;
+const INSTANT_CAST_AQI = EPA_454_AQI;
+
+const INSTANT_CAST_CONCENTRATIONS = {
+	...EPA_454_CONCENTRATIONS,
+	// https://aqicn.org/faq/2016-08-10/ozone-aqi-scale-update/
+	"OZONE": {
+		// unit: ppb
+		GOOD: { LOWER: 0, UPPER: 61.5 },
+		MODERATE: { LOWER: 62.5, UPPER: 100.5 },
+		UNHEALTHY_SENSETIVE: { LOWER: 101.5, UPPER: 151.5 },
+		UNHEALTHY: { LOWER: 152.5, UPPER: 204 },
+		VERY_UNHEALTHY: { LOWER: 205, UPPER: 404 },
+		HAZARDOUS: { LOWER: 405, UPPER: 504 },
+		VERY_HAZARDOUS: { LOWER: 505, UPPER: 604 },
+	},
+	"PM2.5": EPA_454_CONCENTRATIONS["PM2.5_24H"],
+	"PM10": EPA_454_CONCENTRATIONS["PM10_24H"],
+	"CO": EPA_454_CONCENTRATIONS["CO_8H"],
+	"OZONE_8H": undefined,
+	"PM2.5_24H": undefined,
+	"PM10_24H": undefined,
+	"CO_8H": undefined,
+	"SO2_24H": undefined,
 };
 
 /***************** Processing *****************/
