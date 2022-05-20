@@ -50,6 +50,105 @@ const WEATHER_STATUS = {
 	HEAVY_SNOW: "heavy-snow",
 };
 
+// https://www.airnow.gov/sites/default/files/2020-05/aqi-technical-assistance-document-sept2018.pdf
+const EPA_454_AQI_LEVEL = {
+	INVALID: -1,
+	GOOD: 1,
+	MODERATE: 2,
+	UNHEALTHY_SENSETIVE: 3,
+	UNHEALTHY: 4,
+	VERY_UNHEALTHY: 5,
+	HAZARDOUS: 6,
+	// meanless for user
+	VERY_HAZARDOUS: 6,
+	OVER_RANGE: 7,
+};
+
+const EPA_454_AQI = {
+	GOOD: { LOWER: 0, UPPER: 50 },
+	MODERATE: { LOWER: 51, UPPER: 100 },
+	UNHEALTHY_SENSETIVE: { LOWER: 101, UPPER: 150 },
+	UNHEALTHY: { LOWER: 151, UPPER: 200 },
+	VERY_UNHEALTHY: { LOWER: 201, UPPER: 300 },
+	HAZARDOUS: { LOWER: 301, UPPER: 400 },
+	VERY_HAZARDOUS: { LOWER: 401, UPPER: 500 },
+};
+
+const EPA_454_CONCENTRATIONS = {
+	"OZONE": {
+		// unit: ppm
+		UNHEALTHY_SENSETIVE: { LOWER: 0.125, UPPER: 0.164 },
+		UNHEALTHY: { LOWER: 0.165, UPPER: 0.204 },
+		VERY_UNHEALTHY: { LOWER: 0.205, UPPER: 0.404 },
+		HAZARDOUS: { LOWER: 0.405, UPPER: 0.504 },
+		VERY_HAZARDOUS: { LOWER: 0.505, UPPER: 0.604 },
+	},
+	"OZONE_8H": {
+		// unit: ppm
+		GOOD: { LOWER: 0.000, UPPER: 0.054 },
+		MODERATE: { LOWER: 0.055, UPPER: 0.070 },
+		UNHEALTHY_SENSETIVE: { LOWER: 0.071, UPPER: 0.085 },
+		UNHEALTHY: { LOWER: 0.086, UPPER: 0.105 },
+		VERY_UNHEALTHY: { LOWER: 0.106, UPPER: 0.200 },
+	},
+	"PM2.5_24H": {
+		// unit: ug/m3
+		GOOD: { LOWER: 0.0, UPPER: 12.0 },
+		MODERATE: { LOWER: 12.1, UPPER: 35.4 },
+		// if a different SHL for PM2.5 is promulgated, the following numbers will change accordingly.
+		UNHEALTHY_SENSETIVE: { LOWER: 35.5, UPPER: 55.4 },
+		UNHEALTHY: { LOWER: 55.5, UPPER: 150.4 },
+		VERY_UNHEALTHY: { LOWER: 150.5, UPPER: 250.4 },
+		HAZARDOUS: { LOWER: 250.5, UPPER: 350.4 },
+		VERY_HAZARDOUS: { LOWER: 350.5, UPPER: 500.4 },
+	},
+	"PM10_24H": {
+		// unit: ug/m3
+		GOOD: { LOWER: 0, UPPER: 54 },
+		MODERATE: { LOWER: 55, UPPER: 154 },
+		UNHEALTHY_SENSETIVE: { LOWER: 155, UPPER: 254 },
+		UNHEALTHY: { LOWER: 255, UPPER: 354 },
+		VERY_UNHEALTHY: { LOWER: 355, UPPER: 424 },
+		HAZARDOUS: { LOWER: 425, UPPER: 504 },
+		VERY_HAZARDOUS: { LOWER: 505, UPPER: 604 },
+	},
+	"CO_8H": {
+		// unit: ppm
+		GOOD: { LOWER: 0.0, UPPER: 4.4 },
+		MODERATE: { LOWER: 4.5, UPPER: 9.4 },
+		UNHEALTHY_SENSETIVE: { LOWER: 9.5, UPPER: 12.4 },
+		UNHEALTHY: { LOWER: 12.5, UPPER: 15.4 },
+		VERY_UNHEALTHY: { LOWER: 15.5, UPPER: 30.4 },
+		HAZARDOUS: { LOWER: 30.5, UPPER: 40.4 },
+		VERY_HAZARDOUS: { LOWER: 40.5, UPPER: 50.4 },
+	},
+	"SO2": {
+		// unit: ppb
+		GOOD: { LOWER: 0, UPPER: 35 },
+		MODERATE: { LOWER: 36, UPPER: 75 },
+		UNHEALTHY_SENSETIVE: { LOWER: 76, UPPER: 185 },
+		// 1-hour SO2 values do not define higher AQI values (≥ 200).
+		// AQI values of 200 or greater are calculated with 24-hour SO2 concentrations.
+	},
+	"SO2_24H": {
+		// unit: ppb
+		UNHEALTHY: { LOWER: 186, UPPER: 304 },
+		VERY_UNHEALTHY: { LOWER: 305, UPPER: 604 },
+		HAZARDOUS: { LOWER: 605, UPPER: 804 },
+		VERY_HAZARDOUS: { LOWER: 805, UPPER: 1004 },
+	},
+	"NO2": {
+		// unit: ppb
+		GOOD: { LOWER: 0, UPPER: 53 },
+		MODERATE: { LOWER: 54, UPPER: 100 },
+		UNHEALTHY_SENSETIVE: { LOWER: 101, UPPER: 360 },
+		UNHEALTHY: { LOWER: 361, UPPER: 649 },
+		VERY_UNHEALTHY: { LOWER: 650, UPPER: 1249 },
+		HAZARDOUS: { LOWER: 1250, UPPER: 1649 },
+		VERY_HAZARDOUS: { LOWER: 1650, UPPER: 2049 },
+	},
+};
+
 /***************** Processing *****************/
 !(async () => {
 	const Settings = await setENV("iRingo", "Weather", DataBase);
