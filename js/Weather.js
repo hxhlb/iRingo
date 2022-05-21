@@ -54,6 +54,9 @@ const POLLUTANT_UNITS = {
 	PPM: "ppm", PPB: "ppb", MG_M3: "milligramPerM3", UG_M3: "microgramPerM3",
 };
 
+// https://cfpub.epa.gov/ncer_abstracts/index.cfm/fuseaction/display.files/fileid/14285
+const EPA_TEMPERATURE_CELSIUS = 25;
+
 // https://www.airnow.gov/sites/default/files/2020-05/aqi-technical-assistance-document-sept2018.pdf
 const EPA_454_AQI_LEVEL = {
 	INVALID: -1,
