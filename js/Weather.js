@@ -1699,6 +1699,62 @@ function calculateAQI(AQI) {
 	else return 6;
 };
 
+function getMolecularWeight(chemicalFormula) {
+	if (typeof chemicalFormula === "string" && chemicalFormula.match(/[\W_]+/)) {
+		throw Error(`wrong format of chemical formula: ${chemicalFormula}`);
+	}
+
+	function getAtomicWeight(atom) {
+		// https://www.cmu.edu/gelfand/lgc-educational-media/polymers/what-is-polymer/molecular-weight-calculation.html
+		// enough for us
+		const atomicWeights = {
+			"H": 1, "C": 12, "N": 14, "O": 16,
+			"Na": 23, "Cl": 35, "S": 32,
+		};
+
+		const atomicWeight = atomicWeights[atom];
+
+		if (isNaN(atomicWeight)) {
+			throw Error(
+				`unsupported chemical formula or wrong format of chemical formula: ${chemicalFormula}`
+			);
+		}
+
+		return atomicWeight;
+	};
+
+	const stringArray = chemicalFormula.split('');
+
+	let atom = '';
+	let multiplier = '';
+	let molecularWeight = 0;
+
+	function toWeight(atom, multiplier) {
+		return getAtomicWeight(atom) * (multiplier === '' ? 1 : parseInt(multiplier));
+	};
+
+	stringArray.forEach((char, index, array) => {
+		if (!isNaN(parseInt(char))) {
+			multiplier += char;
+		} else if (char === char.toLowerCase()) {
+			atom += char;
+		} else {
+			if (atom !== '') {
+				molecularWeight += toWeight(atom, multiplier);
+			}
+
+			atom = char;
+			multiplier = '';
+		}
+
+		if (index + 1 === array.length) {
+			molecularWeight += toWeight(atom, multiplier);
+		}
+	});
+
+	return molecularWeight;
+};
+
 function toAqi(aqiBreakpoints, concentrationBreakpoints, pollutantName, pollutantValue) {
 	const breakpoints = Object.entries(concentrationBreakpoints[pollutantName]);
 
