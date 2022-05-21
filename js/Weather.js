@@ -1762,6 +1762,95 @@ function getMolecularWeight(chemicalFormula) {
 	return molecularWeight;
 };
 
+// https://aqicn.org/faq/2015-09-06/ozone-aqi-using-concentrations-in-milligrams-or-ppb
+// https://cfpub.epa.gov/ncer_abstracts/index.cfm/fuseaction/display.files/fileid/14285
+function pollutantUnitConverter(unit, unitToConvert, amount, temperatureCelsius, chemicalFormula) {
+	const INVERSE_GAS_CONSTANT = 12.187;
+	const ZERO_CELSIUS_IN_KELVIN = 273.15;
+	const { PPM, PPB, MG_M3, UG_M3 } = POLLUTANT_UNITS;
+
+	function ppmToMgM3(amount, temperatureCelsius, chemicalFormula) {
+		return amount * INVERSE_GAS_CONSTANT * getMolecularWeight(chemicalFormula)
+			/ (temperatureCelsius + ZERO_CELSIUS_IN_KELVIN);
+	};
+
+	function ppbToUgM3(amount, temperatureCelsius, chemicalFormula) {
+		return ppmToMgM3(amount, temperatureCelsius, chemicalFormula);
+	};
+
+	function mgM3ToPpm(amount, temperatureCelsius, chemicalFormula) {
+		return amount * (temperatureCelsius + ZERO_CELSIUS_IN_KELVIN)
+			/ (INVERSE_GAS_CONSTANT * getMolecularWeight(chemicalFormula));
+	};
+
+	function ugM3ToPpb(amount, temperatureCelsius, chemicalFormula) {
+		return mgM3ToPpm(amount, temperatureCelsius, chemicalFormula);
+	};
+
+	switch (unit) {
+		case PPM:
+			switch (unitToConvert) {
+				case PPB:
+					return amount * 1000;
+				case MG_M3:
+					return ppmToMgM3(amount, temperatureCelsius, chemicalFormula);
+				case UG_M3:
+					const inPpb = pollutantUnitConverter(unit, PPB, amount, null, null);
+					return ppbToUgM3(inPpb, temperatureCelsius, chemicalFormula);
+				default:
+					break;
+			};
+			break;
+		case PPB:
+			switch (unitToConvert) {
+				case PPM:
+					return amount * 0.001;
+				case MG_M3:
+					const inPpm = pollutantUnitConverter(unit, PPM, amount, null, null);
+					return ppmToMgM3(inPpm, temperatureCelsius, chemicalFormula);
+				case UG_M3:
+					return ppbToUgM3(amount, temperatureCelsius, chemicalFormula);
+				default:
+					break;
+			};
+			break;
+		case MG_M3:
+			switch (unitToConvert) {
+				case UG_M3:
+					return amount * 1000;
+				case PPM:
+					return mgM3ToPpm(amount, temperatureCelsius, chemicalFormula);
+				case PPB:
+					const inUgM3 = pollutantUnitConverter(
+						unit, UG_M3, amount, null, null
+					);
+					return ugM3ToPpb(inUgM3, temperatureCelsius, chemicalFormula);
+				default:
+					break;
+			};
+			break;
+		case UG_M3:
+			switch (unitToConvert) {
+				case MG_M3:
+					return amount * 0.001;
+				case PPM:
+					const inMgM3 = pollutantUnitConverter(
+						unit, MG_M3, amount, null, null
+					);
+					return mgM3ToPpm(inMgM3, temperatureCelsius, chemicalFormula);
+				case PPB:
+					return ugM3ToPpb(amount, temperatureCelsius, chemicalFormula);
+				default:
+					break;
+			};
+			break;
+		default:
+			break;
+	}
+
+	throw Error(`unsupported unit: unit = ${unit}, unitToConvert = ${unitToConvert}`);
+};
+
 function toAqi(aqiBreakpoints, concentrationBreakpoints, pollutantName, pollutantValue) {
 	const breakpoints = Object.entries(concentrationBreakpoints[pollutantName]);
 
