@@ -1765,6 +1765,13 @@ function getMolecularWeight(chemicalFormula) {
 	return molecularWeight;
 };
 
+function toV2Unit(unit) {
+	const unitV1List = { "µg\/m3": POLLUTANT_UNITS.UG_M3, "mg\/m3": POLLUTANT_UNITS.MG_M3 };
+	const v2Unit = unitV1List[unit];
+
+	return v2Unit ? v2Unit : unit;
+};
+
 function toChemicalFormula(name) {
 	const chemicalFormulaList = { "OZONE": "O3" };
 	const chemicalFormula = chemicalFormulaList[name];
@@ -1890,7 +1897,11 @@ function pollutantsToAqis(
 				const unitToConvert = concentrationUnits[name];
 				if (unit !== unitToConvert) {
 					pollutantUnitConverter(
-						unit, unitToConvert, amount, EPA_TEMPERATURE_CELSIUS, toChemicalFormula(name),
+						toV2Unit(unit),
+						unitToConvert,
+						amount,
+						EPA_TEMPERATURE_CELSIUS,
+						toChemicalFormula(name),
 					);
 				}
 
