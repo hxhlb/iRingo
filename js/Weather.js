@@ -1887,12 +1887,12 @@ function pollutantUnitConverter(unit, unitToConvert, amount, temperatureCelsius,
 	throw Error(`unsupported unit: unit = ${unit}, unitToConvert = ${unitToConvert}`);
 };
 
-function toAqi(aqiBreakpoints, concentrationBreakpoints, pollutantName, pollutantValue) {
+function toAqi(aqiRanges, concentrationBreakpoints, pollutantName, pollutantValue) {
 	const breakpoints = Object.entries(concentrationBreakpoints[pollutantName]);
 
 	for (const [aqiLevel, concentrationRange] of breakpoints) {
 		if (pollutantValue <= concentrationRange.UPPER) {
-			const aqiRange = aqiBreakpoints[aqiLevel];
+			const aqiRange = aqiRanges[aqiLevel];
 			return Math.round(
 				(aqiRange.UPPER - aqiRange.LOWER) * (pollutantValue - concentrationRange.LOWER)
 					/ (concentrationRange.UPPER - concentrationRange.LOWER) + aqiRange.LOWER
@@ -1902,7 +1902,7 @@ function toAqi(aqiBreakpoints, concentrationBreakpoints, pollutantName, pollutan
 };
 
 function pollutantsToAqis(
-	aqiBreakpoints, concentrationBreakpoints, concentrationUnits, pollutants,
+	aqiRanges, concentrationBreakpoints, concentrationUnits, temperatureCelsius, pollutants,
 ) {
 	const aqis = { index: -1, pollutants: [] };
 
@@ -1915,12 +1915,12 @@ function pollutantsToAqis(
 						toV2Unit(unit),
 						unitToConvert,
 						amount,
-						EPA_TEMPERATURE_CELSIUS,
+						temperatureCelsius,
 						toChemicalFormula(name),
 					);
 				}
 
-				const aqi = toAqi(aqiBreakpoints, concentrationBreakpoints, name, amount);
+				const aqi = toAqi(aqiRanges, concentrationBreakpoints, name, amount);
 
 				aqis.pollutants.push({ name, amount, unit: unitToConvert, aqi });
 			}
