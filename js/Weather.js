@@ -1762,6 +1762,17 @@ function getMolecularWeight(chemicalFormula) {
 	return molecularWeight;
 };
 
+function toChemicalFormula(name) {
+	const chemicalFormulaList = { "OZONE": "O3" };
+	const chemicalFormula = chemicalFormulaList[name];
+
+	if (chemicalFormula) {
+		return chemicalFormula;
+	} else {
+		return name;
+	}
+}
+
 // https://aqicn.org/faq/2015-09-06/ozone-aqi-using-concentrations-in-milligrams-or-ppb
 // https://cfpub.epa.gov/ncer_abstracts/index.cfm/fuseaction/display.files/fileid/14285
 function pollutantUnitConverter(unit, unitToConvert, amount, temperatureCelsius, chemicalFormula) {
