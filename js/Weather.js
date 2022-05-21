@@ -50,6 +50,10 @@ const WEATHER_STATUS = {
 	HEAVY_SNOW: "heavy-snow",
 };
 
+const POLLUTANT_UNITS = {
+	PPM: "ppm", PPB: "ppb", MG_M3: "milligramPerM3", UG_M3: "microgramPerM3",
+};
+
 // https://www.airnow.gov/sites/default/files/2020-05/aqi-technical-assistance-document-sept2018.pdf
 const EPA_454_AQI_LEVEL = {
 	INVALID: -1,
@@ -75,8 +79,10 @@ const EPA_454_AQI = {
 };
 
 const EPA_454_UNITS = {
-	"OZONE": "ppm", "OZONE_8H": "ppm", "PM2.5_24H": "microgramPerM3", "PM10_24H": "microgramPerM3",
-	"CO_8H": "ppm", "SO2": "ppb", "SO2_24H": "ppb", "NO2": "ppb",
+	"OZONE": POLLUTANT_UNITS.PPM, "OZONE_8H": POLLUTANT_UNITS.PPM,
+	"PM2.5_24H": POLLUTANT_UNITS.UG_M3, "PM10_24H": POLLUTANT_UNITS.UG_M3,
+	"CO_8H": POLLUTANT_UNITS.PPM, "SO2": POLLUTANT_UNITS.PPB,
+	"SO2_24H": POLLUTANT_UNITS.PPB, "NO2": POLLUTANT_UNITS.PPB,
 };
 
 const EPA_454_CONCENTRATIONS = {
@@ -159,10 +165,11 @@ const HJ_633_AQI_LEVEL = EPA_454_AQI_LEVEL;
 const HJ_633_AQI = EPA_454_AQI;
 
 const HJ_633_UNITS = {
-	"SO2_24H": "microgramPerM3", "SO2": "microgramPerM3", "NO2_24H": "microgramPerM3",
-	"NO2": "microgramPerM3", "PM10_24H": "microgramPerM3", "CO_24H": "milligramPerM3",
-	"CO": "milligramPerM3", "OZONE": "microgramPerM3", "OZONE_8H": "microgramPerM3",
-	"PM2.5_24H": "microgramPerM3",
+	"SO2_24H": POLLUTANT_UNITS.UG_M3, "SO2": POLLUTANT_UNITS.UG_M3,
+	"NO2_24H": POLLUTANT_UNITS.UG_M3, "NO2": POLLUTANT_UNITS.UG_M3,
+	"PM10_24H": POLLUTANT_UNITS.UG_M3, "CO_24H": POLLUTANT_UNITS.MG_M3,
+	"CO": POLLUTANT_UNITS.MG_M3, "OZONE": POLLUTANT_UNITS.UG_M3,
+	"OZONE_8H": POLLUTANT_UNITS.UG_M3, "PM2.5_24H": POLLUTANT_UNITS.UG_M3,
 };
 
 const HJ_633_CONCENTRATIONS = {
