@@ -1879,6 +1879,38 @@ function toAqi(aqiBreakpoints, concentrationBreakpoints, pollutantName, pollutan
 	};
 };
 
+function pollutantsToAqis(
+	aqiBreakpoints, concentrationBreakpoints, concentrationUnits, pollutants,
+) {
+	const aqis = { index: -1, pollutants: [] };
+
+	if (pollutants) {
+		pollutants.forEach(({ name, amount, unit }) => {
+			if (Object.keys(concentrationBreakpoints).includes(name)) {
+				const unitToConvert = concentrationUnits[name];
+				if (unit !== unitToConvert) {
+					pollutantUnitConverter(
+						unit, unitToConvert, amount, EPA_TEMPERATURE_CELSIUS, toChemicalFormula(name),
+					);
+				}
+
+				const aqi = toAqi(aqiBreakpoints, concentrationBreakpoints, name, amount);
+
+				aqis.pollutants.push({ name, amount, unit: unitToConvert, aqi });
+			}
+		});
+
+		const primary = aqis.pollutants.reduce((previous, current) =>
+			current.aqi > previous.aqi ? current : previous
+		);
+
+		aqis.index = primary.aqi;
+		aqis.primaryPollutant = primary.name;
+	}
+
+	return aqis;
+};
+
 /**
  * Calculate Precipitation Level
  * https://docs.caiyunapp.com/docs/tables/precip
