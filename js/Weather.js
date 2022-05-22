@@ -1490,6 +1490,7 @@ async function outputAqi(apiVersion, aqiObject) {
 	airQuality.source = aqiObject.sourceName;
 
 	$.log(`🎉 ${$.name}, ${outputAqi.name}完成`, '');
+	Object.keys(airQuality).forEach(key => !airQuality[key] && delete airQuality[key]);
 	return airQuality;
 };
 
