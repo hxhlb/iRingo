@@ -838,18 +838,22 @@ function appleAqiConverter(standard, airQuality) {
 		IOS_SCALE, AQI_LEVEL, SIGNIFICANT_LEVEL,
 		AQI_RANGE, CONCENTRATION_UNITS, CONCENTRATION_BREAKPOINTS,
 	} = standard;
-	let SCALE, INDEX;
+	let SCALE, INDEX, UG_M3, MG_M3;
 	const pollutants = airQuality?.pollutants;
 
 	switch (airQuality?.metadata?.version) {
 		case 1:
 			SCALE = "airQualityScale";
 			INDEX = "airQualityIndex";
+			UG_M3 = POLLUTANT_UNITS.SLASH.UG_M3;
+			MG_M3 = POLLUTANT_UNITS.SLASH.MG_M3;
 			break;
 		case 2:
 		default:
 			SCALE = "scale";
 			INDEX = "index";
+			UG_M3 = POLLUTANT_UNITS.TEXT.UG_M3;
+			MG_M3 = POLLUTANT_UNITS.TEXT.MG_M3;
 	};
 
 	if (pollutants && airQuality?.[SCALE] !== IOS_SCALE) {
@@ -858,7 +862,7 @@ function appleAqiConverter(standard, airQuality) {
 			const coName = "CO";
 			const co = pollutants[coName];
 	
-			if (typeof co?.value === "number" && co?.unit && co.unit === POLLUTANT_UNITS.UG_M3) {
+			if (typeof co?.value === "number" && co?.unit && co.unit === UG_M3) {
 				const coAqi = toAqi(
 					HJ_633.AQI_RANGE,
 					HJ_633.CONCENTRATION_BREAKPOINTS,
@@ -867,7 +871,7 @@ function appleAqiConverter(standard, airQuality) {
 				);
 
 				if (airQuality?.[INDEX] > -1 && coAqi < airQuality[INDEX]) {
-					pollutants[coName].unit = HJ_633.CONCENTRATION_UNITS.CO;
+					pollutants[coName].unit = MG_M3;
 				}
 			}
 		}
