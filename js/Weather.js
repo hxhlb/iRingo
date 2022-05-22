@@ -913,7 +913,9 @@ function appleAqiConverter(standard, airQuality) {
 					HJ_633.AQI_RANGES,
 					HJ_633.CONCENTRATION_BREAKPOINTS,
 					coName,
-					pollutantUnitConverter(co.unit, HJ_633.CONCENTRATION_UNITS.CO, co.amount, null, coName),
+					pollutantUnitConverter(
+						toTextStyleUnit(co.unit), HJ_633.CONCENTRATION_UNITS.CO, co.amount, null, coName,
+					),
 				);
 
 				$.log(
@@ -924,7 +926,9 @@ function appleAqiConverter(standard, airQuality) {
 				// lowest value of coAqi should be 1
 				if (coAqi < 1) {
 					pollutants[coName].amount =
-						pollutantUnitConverter(HJ_633.CONCENTRATION_UNITS.CO, co.unit, co.amount, null, coName);
+						pollutantUnitConverter(
+							HJ_633.CONCENTRATION_UNITS.CO, toTextStyleUnit(co.unit), co.amount, null, coName
+						);
 				}
 			}
 		}
