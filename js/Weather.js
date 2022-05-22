@@ -923,7 +923,8 @@ function appleAqiConverter(standard, airQuality) {
 
 				// lowest value of coAqi should be 1
 				if (coAqi < 1) {
-					pollutants[coName].unit = MG_M3;
+					pollutants[coName].amount =
+						pollutantUnitConverter(HJ_633.CONCENTRATION_UNITS.CO, co.unit, co.amount, null, coName);
 				}
 			}
 		}
