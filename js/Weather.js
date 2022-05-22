@@ -402,13 +402,13 @@ const WAQI_INSTANT_CAST = {
 						}
 					};
 
-					$.log(`🚧 ${$.name}, modifiedAirQuality = ${JSON.stringify(modifiedAirQuality)}`, "");
 					data[AIR_QUALITY] = {
 						...airQuality,
 						...modifiedAirQuality,
 						"metadata": { ...airQuality?.metadata, ...modifiedAirQuality.metadata },
 						"pollutants": { ...airQuality?.pollutants, ...modifiedAirQuality.pollutants },
 					};
+					$.log(`🚧 ${$.name}, data[${AIR_QUALITY}] = ${JSON.stringify(data[AIR_QUALITY])}`, "");
 				} else $.log(`🎉 ${$.name}, 无须替换, 跳过`, "");
 			}
 		};
