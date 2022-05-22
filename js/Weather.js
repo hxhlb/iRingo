@@ -917,7 +917,7 @@ function appleAqiConverter(standard, airQuality) {
 		const aqiCategoryIndex = aqiLevel === AQI_LEVEL.OVER_RANGE ? aqiLevel - 1 : aqiLevel;
 	
 		return toAqiObject(
-			null, null, null, null, null, null, null, null, null,
+			null, null, null, null, null, null, null, null, null, null,
 			pollutants, IOS_SCALE, aqiIndex, aqiCategoryIndex,
 			aqiLevel >= SIGNIFICANT_LEVEL, AQI_COMPARISON.UNKNOWN,
 			pollutantsWithAqi.primaryPollutant,
@@ -932,6 +932,7 @@ function appleAqiConverter(standard, airQuality) {
 };
 
 function waqiToAqi(feedData) {
+	const readTimestamp = (+ new Date());
 	const nowHourTimestamp = (new Date()).setMinutes(0, 0, 0);
 	const reportedTime = feedData?.time?.s;
 	const reportedTimestamp = reportedTime ? (+ new Date(reportedTime)) : nowHourTimestamp;
@@ -964,10 +965,10 @@ function waqiToAqi(feedData) {
 	const primaryPollutant = feedData?.dominentpol;
 
 	return toAqiObject(
-		reportedTimestamp, expireTimestamp, language, location, providerLogo, providerName, url,
+		readTimestamp, reportedTimestamp, expireTimestamp, language, location, providerLogo,
 		// do we actually need convert AQI back to pollutant amounts?
-		sourceType, sourceName, null, scale, aqi, categoryIndex, isSignificant,
-		previousDayComparison, primaryPollutant,
+		providerName, url, sourceType, sourceName, null, scale, aqi, categoryIndex,
+		isSignificant, previousDayComparison, primaryPollutant,
 	);
 };
 
@@ -1316,6 +1317,7 @@ function waqiToAqi(feedData) {
 /**
  * Produce a object for `outputAQI()`
  * @author WordlessEcho
+ * @param {Number} readTimestamp - UNIX timestamp when user read
  * @param {Number} reportedTimestamp - UNIX timestamp when observation station reported data
  * @param {Number} expireTimestamp - UNIX timestamp when data expire
  * @param {string} language - ISO 3166-1 language tag
@@ -1334,7 +1336,8 @@ function waqiToAqi(feedData) {
  * @param {String} primaryPollutant - name of the primary pollutant
  * @return {Object} object for `outputAQI()`
  */
- function toAqiObject(
+function toAqiObject(
+	readTimestamp,
 	reportedTimestamp,
 	expireTimestamp,
 	language,
@@ -1353,6 +1356,7 @@ function waqiToAqi(feedData) {
 	primaryPollutant,
 ) {
 	const aqiObject = {
+		readTimestamp,
 		reportedTimestamp,
 		expireTimestamp,
 		language,
@@ -1446,9 +1450,9 @@ async function outputAqi(apiVersion, aqiObject) {
 
 	airQuality.metadata = toMetadata(
 		apiVersion, aqiObject.expireTimestamp, aqiObject.language, aqiObject.location,
-		aqiObject.providerLogo, aqiObject.providerName, null, aqiObject.reportedTimestamp,
+		aqiObject.providerLogo, aqiObject.providerName, aqiObject.readTimestamp,
 		// TODO
-		aqiObject.sourceType === "station" ? 0 : 1,
+		aqiObject.reportedTimestamp, aqiObject.sourceType === "station" ? 0 : 1,
 	);
 
 	airQuality.isSignificant = aqiObject.isSignificant;
