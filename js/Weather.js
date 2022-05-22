@@ -2016,6 +2016,8 @@ function pollutantUnitConverter(unit, unitToConvert, amount, temperatureCelsius,
 	switch (unit) {
 		case PPM:
 			switch (unitToConvert) {
+				case PPM:
+					return amount;
 				case PPB:
 					return amount * 1000;
 				case MG_M3:
@@ -2029,6 +2031,8 @@ function pollutantUnitConverter(unit, unitToConvert, amount, temperatureCelsius,
 			break;
 		case PPB:
 			switch (unitToConvert) {
+				case PPB:
+					return amount;
 				case PPM:
 					return amount * 0.001;
 				case MG_M3:
@@ -2042,6 +2046,8 @@ function pollutantUnitConverter(unit, unitToConvert, amount, temperatureCelsius,
 			break;
 		case MG_M3:
 			switch (unitToConvert) {
+				case MG_M3:
+					return amount;
 				case UG_M3:
 					return amount * 1000;
 				case PPM:
@@ -2057,6 +2063,8 @@ function pollutantUnitConverter(unit, unitToConvert, amount, temperatureCelsius,
 			break;
 		case UG_M3:
 			switch (unitToConvert) {
+				case UG_M3:
+					return amount;
 				case MG_M3:
 					return amount * 0.001;
 				case PPM:
