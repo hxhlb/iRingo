@@ -2219,7 +2219,7 @@ function toMetadata(
 	apiVersion, expireTimestamp, language, location, providerLogo,
 	providerName, readTimestamp, reportedTimestamp, dataSource,
 ) {
-	const metadata = { language, "longitude": location.longitude, "latitude": location.latitude };
+	const metadata = { language, "longitude": location?.longitude, "latitude": location?.latitude };
 	const expireTime = expireTimestamp
 		? convertTime(apiVersion, new Date(expireTimestamp), 0, 0) : expireTimestamp;
 	const readTime = readTimestamp
@@ -2230,7 +2230,7 @@ function toMetadata(
 	switch (apiVersion) {
 		case "v1":
 			metadata.expire_time = expireTime;
-			metadata.provider_logo = providerLogo.forV1;
+			metadata.provider_logo = providerLogo?.forV1;
 			metadata.provider_name = providerName;
 			metadata.read_time = readTime;
 			metadata.reported_time = reportedTime;
@@ -2239,7 +2239,7 @@ function toMetadata(
 		case "v2":
 		default:
 			metadata.expireTime = expireTime;
-			metadata.providerLogo = providerLogo.forV2;
+			metadata.providerLogo = providerLogo?.forV2;
 			metadata.providerName = providerName;
 			metadata.readTime = readTime;
 			metadata.reportedTime = reportedTime;
