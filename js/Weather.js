@@ -380,7 +380,7 @@ const WAQI_INSTANT_CAST = {
 						const Token = await WAQI("Token", { idx: idx });
 						//var NOW = await WAQI("NOW", { token:Token, idx: idx });
 						const feed = await WAQI("AQI", { token: Token, idx: idx });
-						modifiedAirQuality = outputAqi(
+						modifiedAirQuality = await outputAqi(
 							Params.ver, waqiToAqi(feed?.obs?.[0]?.msg),
 						);
 					} else if (Settings.AQI.Mode == "WAQI Private") {
@@ -390,13 +390,13 @@ const WAQI_INSTANT_CAST = {
 							$.log(`🚧 ${$.name}, 定位精度: 观测站`, "")
 							var { Station, idx } = await WAQI("Nearest", { api: "v1", lat: Params.lat, lng: Params.lng });
 							const feed = await WAQI("StationFeed", { token: Token, idx: idx });
-							modifiedAirQuality = outputAqi(
+							modifiedAirQuality = await outputAqi(
 								Params.ver, waqiToAqi(feed?.data),
 							);
 						} else if (Settings.AQI.Location == "City") {
 							$.log(`🚧 ${$.name}, 定位精度: 城市`, "")
 							const feed = await WAQI("CityFeed", { token: Token, lat: Params.lat, lng: Params.lng });
-							modifiedAirQuality = outputAqi(
+							modifiedAirQuality = await outputAqi(
 								Params.ver, waqiToAqi(feed?.data),
 							);
 						}
@@ -1442,7 +1442,7 @@ function toNextHourObject(
 	location,
 	providerName,
 	unit,
-	sourceName,
+	sourceType,
 	precipStandard,
 	minutes,
 	descriptions,
@@ -1459,7 +1459,7 @@ function toNextHourObject(
 		location,
 		providerName,
 		unit,
-		sourceName,
+		sourceType,
 		precipStandard,
 		minutes,
 		descriptions,
@@ -1494,7 +1494,7 @@ async function outputAqi(apiVersion, aqiObject) {
 		apiVersion, aqiObject.expireTimestamp, aqiObject.language, aqiObject.location,
 		aqiObject.providerLogo, aqiObject.providerName, aqiObject.readTimestamp,
 		// TODO
-		aqiObject.reportedTimestamp, aqiObject.sourceType === "station" ? 0 : 1,
+		aqiObject.reportedTimestamp, null, aqiObject.sourceType === "station" ? 0 : 1,
 	);
 
 	airQuality.isSignificant = aqiObject.isSignificant;
@@ -1554,7 +1554,7 @@ async function outputNextHour(apiVersion, nextHourObject, debugOptions) {
 	nextHour.metadata = toMetadata(
 		apiVersion, nextHourObject.expireTimestamp, nextHourObject.language, nextHourObject.location,
 		null, nextHourObject.providerName, readTimestamp, null,
-		nextHourObject.sourceType === "station" ? 0 : 1,
+		nextHourObject.unit, nextHourObject.sourceType === "station" ? 0 : 1,
 	);
 
 	const minutesData = nextHourObject.minutes ?? [];
@@ -2259,9 +2259,15 @@ function weatherStatusToType(weatherStatus) {
  */
 function toMetadata(
 	apiVersion, expireTimestamp, language, location, providerLogo,
-	providerName, readTimestamp, reportedTimestamp, dataSource,
+	providerName, readTimestamp, reportedTimestamp, unit, dataSource,
 ) {
-	const metadata = { language, "longitude": location?.longitude, "latitude": location?.latitude };
+	const metadata = {
+		"version": parseInt(apiVersion.slice(1)),
+		language,
+		"latitude": location?.latitude,
+		"longitude": location?.longitude,
+		"units": unit,
+	};
 	const expireTime = expireTimestamp
 		? convertTime(apiVersion, new Date(expireTimestamp), 0, 0) : expireTimestamp;
 	const readTime = readTimestamp
