@@ -2100,8 +2100,9 @@ function pollutantsToAqis(
 		pollutants.forEach(({ name, amount, unit }) => {
 			if (Object.keys(concentrationBreakpoints).includes(name)) {
 				const unitToConvert = concentrationUnits[name];
+				let amountValue = amount;
 				if (unit !== unitToConvert) {
-					pollutantUnitConverter(
+					amountValue = pollutantUnitConverter(
 						toTextStyleUnit(unit),
 						unitToConvert,
 						amount,
@@ -2110,9 +2111,9 @@ function pollutantsToAqis(
 					);
 				}
 
-				const aqi = toAqi(aqiRanges, concentrationBreakpoints, name, amount);
+				const aqi = toAqi(aqiRanges, concentrationBreakpoints, name, amountValue);
 
-				aqis.pollutants.push({ name, amount, unit: unitToConvert, aqi });
+				aqis.pollutants.push({ name, amount, unit, aqi });
 			}
 		});
 
