@@ -918,8 +918,14 @@ function appleAqiConverter(standard, airQuality) {
 			AQI_RANGE,
 			CONCENTRATION_BREAKPOINTS,
 			CONCENTRATION_UNITS,
+			// TODO
 			EPA_TEMPERATURE_CELSIUS,
 			Object.values(pollutants),
+		);
+
+		$.log(
+			`🚧 ${$.name}, ${appleAqiConverter.name}: `,
+			`pollutantsWithAqi = ${JSON.stringify(pollutantsWithAqi)}`, "",
 		);
 
 		const aqiIndex = pollutantsWithAqi.index;
