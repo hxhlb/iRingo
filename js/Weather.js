@@ -898,12 +898,12 @@ function appleAqiConverter(standard, airQuality) {
 			const coName = "CO";
 			const co = pollutants[coName];
 	
-			if (typeof co?.value === "number" && co?.unit && co.unit === UG_M3) {
+			if (typeof co?.amount === "number" && co?.unit && co.unit === UG_M3) {
 				const coAqi = toAqi(
 					HJ_633.AQI_RANGE,
 					HJ_633.CONCENTRATION_BREAKPOINTS,
 					coName,
-					pollutantUnitConverter(co.unit, HJ_633.CONCENTRATION_UNITS.CO, co.value, null, coName),
+					pollutantUnitConverter(co.unit, HJ_633.CONCENTRATION_UNITS.CO, co.amount, null, coName),
 				);
 
 				$.log(
@@ -911,6 +911,7 @@ function appleAqiConverter(standard, airQuality) {
 					`coAqi = ${coAqi}`, "",
 				);
 
+				// lowest value of coAqi should be 1
 				if (coAqi < 1) {
 					pollutants[coName].unit = MG_M3;
 				}
