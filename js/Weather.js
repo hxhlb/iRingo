@@ -1485,7 +1485,7 @@ async function outputAqi(apiVersion, aqiObject) {
 			break;
 	};
 
-	airQuality.pollutants = aqiObject.pollutants;
+	airQuality.pollutants = aqiObject.pollutants ?? {};
 	airQuality.primaryPollutant = aqiObject.primaryPollutant;
 	airQuality.source = aqiObject.sourceName;
 
