@@ -2266,7 +2266,6 @@ function toMetadata(
 		language,
 		"latitude": location?.latitude,
 		"longitude": location?.longitude,
-		"units": unit,
 	};
 	const expireTime = expireTimestamp
 		? convertTime(apiVersion, new Date(expireTimestamp), 0, 0) : expireTimestamp;
@@ -2283,6 +2282,7 @@ function toMetadata(
 			metadata.read_time = readTime;
 			metadata.reported_time = reportedTime;
 			metadata.data_source = dataSource;
+			// no units for APIv1
 			break;
 		case "v2":
 		default:
@@ -2291,6 +2291,7 @@ function toMetadata(
 			metadata.providerName = providerName;
 			metadata.readTime = readTime;
 			metadata.reportedTime = reportedTime;
+			metadata.units = unit;
 			// no data source for APIv2
 			break;
 	}
