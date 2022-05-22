@@ -1903,11 +1903,11 @@ function getMolecularWeight(chemicalFormula) {
 	return molecularWeight;
 };
 
-function toV2Unit(unit) {
-	const unitV1List = { "µg\/m3": POLLUTANT_UNITS.UG_M3, "mg\/m3": POLLUTANT_UNITS.MG_M3 };
-	const v2Unit = unitV1List[unit];
-
-	return v2Unit ? v2Unit : unit;
+function toTextStyleUnit(unit) {
+	return unit.replace("µg", "microgram")
+		.replace("mg", "milligram")
+		.replace("\/", "Per")
+		.replace("m3", "M3");
 };
 
 function toChemicalFormula(name) {
@@ -2035,7 +2035,7 @@ function pollutantsToAqis(
 				const unitToConvert = concentrationUnits[name];
 				if (unit !== unitToConvert) {
 					pollutantUnitConverter(
-						toV2Unit(unit),
+						toTextStyleUnit(unit),
 						unitToConvert,
 						amount,
 						temperatureCelsius,
