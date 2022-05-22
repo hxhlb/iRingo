@@ -889,7 +889,7 @@ function appleAqiConverter(standard, airQuality) {
 		const aqiCategoryIndex = aqiLevel === AQI_LEVEL.OVER_RANGE ? aqiLevel - 1 : aqiLevel;
 	
 		return toAqiObject(
-			null, null, null, null, null, null, null, null,
+			null, null, null, null, null, null, null, null, null,
 			pollutants, IOS_SCALE, aqiIndex, aqiCategoryIndex,
 			aqiLevel >= SIGNIFICANT_LEVEL, AQI_COMPARISON.UNKNOWN,
 			pollutantsWithAqi.primaryPollutant,
@@ -904,8 +904,12 @@ function appleAqiConverter(standard, airQuality) {
 };
 
 function waqiToAqi(feedData) {
-	const serverTime = parseInt(feedData?.time?.v);
-	const serverTimestamp = !isNaN(serverTime) ? serverTime * 1000 : (+ new Date());
+	const nowHourTimestamp = (new Date()).setMinutes(0, 0, 0);
+	const reportedTime = feedData?.time?.s;
+	const reportedTimestamp = reportedTime ? (+ new Date(reportedTime)) : nowHourTimestamp;
+	const expireTimestamp = nowHourTimestamp > reportedTimestamp
+		// require data after 15 minutes later if reportedTime from last hour
+		? nowHourTimestamp + 1000 * 60 * 15 : reportedTimestamp + 1000 * 60 * 60;
 	// language from WAQI is always English with local language based on observation stations
 	const language = "en_US";
 	const coordinates = feedData?.city?.geo;
@@ -932,9 +936,10 @@ function waqiToAqi(feedData) {
 	const primaryPollutant = feedData?.dominentpol;
 
 	return toAqiObject(
-		serverTimestamp, language, location, providerLogo, providerName, url, sourceType, sourceName,
+		reportedTimestamp, expireTimestamp, language, location, providerLogo, providerName, url,
 		// do we actually need convert AQI back to pollutant amounts?
-		null, scale, aqi, categoryIndex, isSignificant, previousDayComparison, primaryPollutant,
+		sourceType, sourceName, null, scale, aqi, categoryIndex, isSignificant,
+		previousDayComparison, primaryPollutant,
 	);
 };
 
@@ -1283,7 +1288,8 @@ function waqiToAqi(feedData) {
 /**
  * Produce a object for `outputAQI()`
  * @author WordlessEcho
- * @param {Number} timestamp - UNIX timestamp when you get data
+ * @param {Number} reportedTimestamp - UNIX timestamp when observation station reported data
+ * @param {Number} expireTimestamp - UNIX timestamp when data expire
  * @param {string} language - ISO 3166-1 language tag
  * @param {Object} location - `{ latitude, longitude }`
  * @param {Object} providerLogo - `{ forV2, forV1 }` logo of provider
@@ -1300,8 +1306,9 @@ function waqiToAqi(feedData) {
  * @param {String} primaryPollutant - name of the primary pollutant
  * @return {Object} object for `outputAQI()`
  */
-function toAqiObject(
-	timestamp,
+ function toAqiObject(
+	reportedTimestamp,
+	expireTimestamp,
 	language,
 	location,
 	providerLogo,
@@ -1318,7 +1325,8 @@ function toAqiObject(
 	primaryPollutant,
 ) {
 	const aqiObject = {
-		timestamp,
+		reportedTimestamp,
+		expireTimestamp,
 		language,
 		location,
 		providerLogo,
