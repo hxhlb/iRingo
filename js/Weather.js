@@ -1883,7 +1883,7 @@ function convertTime(apiVersion, time, addMinutes = 0, addSeconds = "") {
  * @returns {Number}
  */
 function toAqiLevel(aqiRange, aqiLevel, aqi) {
-	for (const [name, range] of aqiRange) {
+	for (const [name, range] of Object.entries(aqiRange)) {
 		if (aqi <= range.UPPER) {
 			return aqiLevel[name];
 		}
