@@ -1508,7 +1508,7 @@ async function outputAqi(apiVersion, aqiObject) {
 
 	$.log(`🎉 ${$.name}, ${outputAqi.name}完成`, '');
 	Object.keys(airQuality).forEach(key =>
-		(airQuality[key] === null || airQuality[key] === undefined || isNaN(airQuality[key]))
+		(airQuality[key] === null || airQuality[key] === undefined || airQuality[key] === NaN)
 			&& delete airQuality[key]
 	);
 	return airQuality;
