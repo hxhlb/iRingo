@@ -402,6 +402,7 @@ const WAQI_INSTANT_CAST = {
 						}
 					};
 
+					$.log(`🚧 ${$.name}, modifiedAirQuality = ${JSON.stringify(modifiedAirQuality)}`, "");
 					data[AIR_QUALITY] = {
 						...airQuality,
 						...modifiedAirQuality,
