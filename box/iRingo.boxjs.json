@@ -155,6 +155,10 @@
 					"type": "radios",
 					"items": [
 						{
+							"key": "Local",
+							"label": "本地转换"
+						},
+						{
 							"key": "WAQI Public",
 							"label": "waqi.info 公共API"
 						},
