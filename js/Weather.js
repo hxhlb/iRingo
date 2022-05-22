@@ -848,7 +848,7 @@ function appleAqiConverter(standard, airQuality) {
 	};
 
 	if (pollutants && airQuality?.[SCALE] !== IOS_SCALE) {
-		if (airQuality[SCALE] === "HJ6332012.2201") {
+		if (airQuality[SCALE] === HJ_633.IOS_SCALE) {
 			// fix unit of CO from QWeather, usually unit of CO is mg/m3
 			const coName = "CO";
 			const co = pollutants[coName];
