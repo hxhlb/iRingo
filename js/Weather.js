@@ -964,7 +964,7 @@ function appleAqiConverter(standard, airQuality) {
 function waqiToAqi(feedData) {
 	const readTimestamp = (+ new Date());
 	const nowHourTimestamp = (new Date()).setMinutes(0, 0, 0);
-	const reportedTime = feedData?.time?.s;
+	const reportedTime = feedData?.time?.iso;
 	const reportedTimestamp = reportedTime ? (+ new Date(reportedTime)) : nowHourTimestamp;
 	const expireTimestamp = nowHourTimestamp > reportedTimestamp
 		// require data after 15 minutes later if reportedTime from last hour
