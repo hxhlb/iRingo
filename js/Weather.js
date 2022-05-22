@@ -352,7 +352,29 @@ const WAQI_INSTANT_CAST = {
 			if (url.params?.include?.includes("air_quality") || url.params?.dataSets?.includes("airQuality")) {
 				if (Status == true) {
 					$.log(`🎉 ${$.name}, 需要替换AQI`, "");
-					if (Settings.AQI.Mode == "WAQI Public") {
+					let AIR_QUALITY;
+					switch (Params.ver) {
+						case "v1":
+							AIR_QUALITY = "air_quality";
+							break;
+						case "v2":
+						default:
+							AIR_QUALITY = "airQuality";
+							break;
+					}
+					const airQuality = data[AIR_QUALITY];
+					let modifiedAirQuality = { "metadata": {}, "pollutants": {} };
+
+					if (Settings.AQI.Mode === "Local") {
+						$.log(`🚧 ${$.name}, 工作模式：本地转换`, "");
+
+						if (airQuality) {
+							modifiedAirQuality = outputAqi(
+								// TODO
+								Params.ver, appleAqiConverter(WAQI_INSTANT_CAST, airQuality),
+							);
+						}
+					} else if (Settings.AQI.Mode == "WAQI Public") {
 						$.log(`🚧 ${$.name}, 工作模式: waqi.info 公共API`, "")
 						var { Station, idx } = await WAQI("Nearest", { api: "v1", lat: Params.lat, lng: Params.lng });
 						const Token = await WAQI("Token", { idx: idx });
@@ -370,7 +392,13 @@ const WAQI_INSTANT_CAST = {
 							var AQI = await WAQI("CityFeed", { token: Token, lat: Params.lat, lng: Params.lng });
 						}
 					};
-					data = await outputAQI(Params.ver, Station, AQI, data, Settings);
+
+					data[AIR_QUALITY] = {
+						...airQuality,
+						...modifiedAirQuality,
+						"metadata": { ...airQuality?.metadata, ...modifiedAirQuality.metadata },
+						"pollutants": { ...airQuality?.pollutants, ...modifiedAirQuality.pollutants },
+					};
 				} else $.log(`🎉 ${$.name}, 无须替换, 跳过`, "");
 			}
 		};
