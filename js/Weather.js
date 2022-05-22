@@ -992,7 +992,7 @@ function waqiToAqi(feedData) {
 	);
 	const isSignificant = categoryIndex >= WAQI_INSTANT_CAST.SIGNIFICANT_LEVEL;
 	const previousDayComparison = AQI_COMPARISON.UNKNOWN;
-	const primaryPollutant = feedData?.dominentpol;
+	const primaryPollutant = DataBase.Pollutants[feedData?.dominentpol];
 
 	return toAqiObject(
 		readTimestamp, reportedTimestamp, expireTimestamp, language, location, providerLogo,
