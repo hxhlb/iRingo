@@ -1042,6 +1042,8 @@ function waqiToAqi(feedData) {
 	// the unit of server_time is second
 	const serverTime = parseInt(dataWithMinutely?.server_time);
 	const serverTimestamp = !isNaN(serverTime) ? serverTime * 1000 : (+ new Date());
+	// TODO
+	const expireTimestamp = serverTimestamp + 1000 * 60 * 15;
 	const ccLanguage = dataWithMinutely?.lang;
 	// example: replace `zh_CN` to `zh-CN`
 	const language = ccLanguage?.replace('_', '-') ?? "en-US";
@@ -1291,11 +1293,14 @@ function waqiToAqi(feedData) {
 	};
 
 	return toNextHourObject(
-		serverTimestamp,
+		(+ new Date()),
+		expireTimestamp,
 		language,
 		location,
 		providerName,
 		unit,
+		// TODO
+		"modeled",
 		precipStandard,
 		toMinutes(
 			precipStandard,
@@ -1386,11 +1391,13 @@ function toAqiObject(
 /**
  * Produce a object for `outputNextHour()`
  * @author WordlessEcho
- * @param {Number} timestamp - UNIX timestamp when you get data
+ * @param {Number} readTimestamp - UNIX timestamp when user read
+ * @param {Number} expireTimestamp - UNIX timestamp when data expire
  * @param {string} language - ISO 3166-1 language tag
  * @param {Object} location - `{ latitude, longitude }`
  * @param {string} providerName - provider name
  * @param {string} unit - example: "mmPerHour"
+ * @param {string} sourceName - `station` or `modeled`
  * @param {Object} precipStandard - `*_PRECIPITATION_RANGE`
  * @param {Array} minutes - array of `{ weatherStatus: one of WEATHER_STATUS, precipitation,
  * chance: percentage (0 to 100) }`
@@ -1399,11 +1406,13 @@ function toAqiObject(
  * @return {Object} object for `outputNextHour()`
  */
 function toNextHourObject(
-	timestamp = (+ new Date()),
+	readTimestamp,
+	expireTimestamp,
 	language,
 	location,
 	providerName,
 	unit,
+	sourceName,
 	precipStandard,
 	minutes,
 	descriptions,
@@ -1414,11 +1423,13 @@ function toNextHourObject(
 	// but there are too much works to collect different language of templates of Apple Weather
 	// I wish Apple could provide description from app but not API
 	const nextHourObject =  {
-		timestamp,
+		readTimestamp,
+		expireTimestamp,
 		language,
 		location,
 		providerName,
 		unit,
+		sourceName,
 		precipStandard,
 		minutes,
 		descriptions,
@@ -1511,26 +1522,15 @@ async function outputNextHour(apiVersion, nextHourObject, debugOptions) {
 		"minutes": [],
 	};
 
-	// 创建metadata
-	let metadata = {
-		"Version": (apiVersion == "v1") ? 1 : 2,
-		"Time": nextHourObject.timestamp,
-		"Expire": 15,
-		"Longitude": nextHourObject.location.longitude,
-		"Latitude": nextHourObject.location.latitude,
-		"Language": nextHourObject.language,
-		"Name": nextHourObject.providerName,
-		// should be no Logo as same as the Apple Weather in nextHour
-		"Logo": "https://www.weatherol.cn/images/logo.png",
-		"Unit": nextHourObject.units,
-		// untested: I guess this is as same as the data_source in AQI
-		"Source": 0, //来自XX读数 0:监测站 1:模型
-	};
 	// 注入数据
-	nextHour.metadata = Metadata(metadata);
+	nextHour.metadata = toMetadata(
+		apiVersion, nextHourObject.expireTimestamp, nextHourObject.language, nextHourObject.location,
+		null, nextHourObject.providerName, nextHourObject.readTimestamp, null,
+		nextHourObject.sourceType === "station" ? 0 : 1,
+	);
 
 	// use next minute and set second to zero as start time in next hour forecast
-	const startTimestamp = nextHourObject.timestamp + 1000 * 60;
+	const startTimestamp = nextHourObject.readTimestamp + 1000 * 60;
 	nextHour.startTime = convertTime(apiVersion, new Date(startTimestamp));
 	nextHour.minutes = getMinutes(apiVersion, nextHourObject.minutes, startTimestamp);
 	nextHour.condition = getConditions(
