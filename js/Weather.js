@@ -1512,36 +1512,44 @@ async function outputNextHour(apiVersion, nextHourObject, debugOptions) {
 	const PERCEIVED_DIVIDERS = { INVALID: -1, BEGINNING: 0, BOTTOM: 1, MIDDLE: 2, TOP: 3, };
 
 	// 创建对象
-	const nextHour = {
-		"name": "NextHourForecast",
-		//"isSignificant": true, // 重要/置顶
-		"metadata": {},
-		"startTime": "",
-		"summary": [],
-		"condition": [],
-		"minutes": [],
-	};
+	const nextHour = { "name": "NextHourForecast" };
+	const readTimestamp = nextHourObject.readTimestamp ?? (+ new Date());
 
 	// 注入数据
 	nextHour.metadata = toMetadata(
 		apiVersion, nextHourObject.expireTimestamp, nextHourObject.language, nextHourObject.location,
-		null, nextHourObject.providerName, nextHourObject.readTimestamp, null,
+		null, nextHourObject.providerName, readTimestamp, null,
 		nextHourObject.sourceType === "station" ? 0 : 1,
 	);
 
-	// use next minute and set second to zero as start time in next hour forecast
-	const startTimestamp = nextHourObject.readTimestamp + 1000 * 60;
-	nextHour.startTime = convertTime(apiVersion, new Date(startTimestamp));
-	nextHour.minutes = getMinutes(apiVersion, nextHourObject.minutes, startTimestamp);
-	nextHour.condition = getConditions(
-		apiVersion,
-		nextHourObject.minutes,
-		startTimestamp,
-		nextHourObject.descriptions,
-	);
-	nextHour.summary = getSummaries(apiVersion, nextHourObject.minutes, startTimestamp);
+	const minutesData = nextHourObject.minutes ?? [];
 
-	$.log(`🎉 ${$.name}, 下一小时降水强度替换完成`, "");
+	if (minutesData.length > 0) {
+		// use next minute and set second to zero as start time in next hour forecast
+		const startTimestamp = (+ (new Date(readTimestamp + 1000 * 60)).setSeconds(0, 0));
+		nextHour.startTime = convertTime(apiVersion, new Date(startTimestamp), 0, 0);
+		nextHour.minutes = getMinutes(apiVersion, minutesData, startTimestamp);
+		nextHour.condition = getConditions(
+			apiVersion,
+			minutesData,
+			startTimestamp,
+			nextHourObject.descriptions,
+		);
+		nextHour.summary = getSummaries(apiVersion, minutesData, startTimestamp);
+
+		$.log(`🎉 ${$.name}, 下一小时降水强度替换完成`, "");
+	} else {
+		switch (apiVersion) {
+			case "v1":
+				nextHour.metadata.temporarily_unavailable = true;
+				break;
+			case "v2":
+			default:
+				nextHour.metadata.temporarilyUnavailable = true;
+				break;
+		}
+	}
+
 	return nextHour;
 
 	/***************** Fuctions *****************/
