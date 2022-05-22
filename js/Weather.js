@@ -898,7 +898,7 @@ function appleAqiConverter(standard, airQuality) {
 			const coName = "CO";
 			const co = pollutants[coName];
 	
-			if (typeof co?.amount === "number" && co?.unit && co.unit === UG_M3) {
+			if (!isNaN(co?.amount) && co?.unit && co.unit === UG_M3) {
 				const coAqi = toAqi(
 					HJ_633.AQI_RANGE,
 					HJ_633.CONCENTRATION_BREAKPOINTS,
