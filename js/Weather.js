@@ -906,6 +906,11 @@ function appleAqiConverter(standard, airQuality) {
 					pollutantUnitConverter(co.unit, HJ_633.CONCENTRATION_UNITS.CO, co.value, null, coName),
 				);
 
+				$.log(
+					`🚧 ${$.name}, ${appleAqiConverter.name}: `,
+					`coAqi = ${coAqi}`, "",
+				);
+
 				if (coAqi < 1) {
 					pollutants[coName].unit = MG_M3;
 				}
@@ -919,11 +924,6 @@ function appleAqiConverter(standard, airQuality) {
 			// TODO
 			EPA_TEMPERATURE_CELSIUS,
 			Object.values(pollutants),
-		);
-
-		$.log(
-			`🚧 ${$.name}, ${appleAqiConverter.name}: `,
-			`pollutantsWithAqi = ${JSON.stringify(pollutantsWithAqi)}`, "",
 		);
 
 		const aqiIndex = pollutantsWithAqi.index;
