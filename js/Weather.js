@@ -379,17 +379,26 @@ const WAQI_INSTANT_CAST = {
 						var { Station, idx } = await WAQI("Nearest", { api: "v1", lat: Params.lat, lng: Params.lng });
 						const Token = await WAQI("Token", { idx: idx });
 						//var NOW = await WAQI("NOW", { token:Token, idx: idx });
-						var AQI = await WAQI("AQI", { token: Token, idx: idx });
+						const feed = await WAQI("AQI", { token: Token, idx: idx });
+						modifiedAirQuality = outputAqi(
+							Params.ver, waqiToAqi(feed?.obs?.[0]?.msg),
+						);
 					} else if (Settings.AQI.Mode == "WAQI Private") {
 						$.log(`🚧 ${$.name}, 工作模式: waqi.info 私有API`, "")
 						const Token = Settings.AQI.Auth;
 						if (Settings.AQI.Location == "Station") {
 							$.log(`🚧 ${$.name}, 定位精度: 观测站`, "")
 							var { Station, idx } = await WAQI("Nearest", { api: "v1", lat: Params.lat, lng: Params.lng });
-							var AQI = await WAQI("StationFeed", { token: Token, idx: idx });
+							const feed = await WAQI("StationFeed", { token: Token, idx: idx });
+							modifiedAirQuality = outputAqi(
+								Params.ver, waqiToAqi(feed?.data),
+							);
 						} else if (Settings.AQI.Location == "City") {
 							$.log(`🚧 ${$.name}, 定位精度: 城市`, "")
-							var AQI = await WAQI("CityFeed", { token: Token, lat: Params.lat, lng: Params.lng });
+							const feed = await WAQI("CityFeed", { token: Token, lat: Params.lat, lng: Params.lng });
+							modifiedAirQuality = outputAqi(
+								Params.ver, waqiToAqi(feed?.data),
+							);
 						}
 					};
 
