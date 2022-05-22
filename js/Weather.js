@@ -70,7 +70,7 @@ const EPA_TEMPERATURE_CELSIUS = 25;
 const EPA_454 = {
 	IOS_SCALE: "EPA_NowCast.2204",
 
-	AQI_LEVEL: {
+	AQI_LEVELS: {
 		INVALID: -1,
 		GOOD: 1,
 		MODERATE: 2,
@@ -85,7 +85,7 @@ const EPA_454 = {
 	// unhealthy for sensetive groups
 	SIGNIFICANT_LEVEL: 3,
 
-	AQI_RANGE: {
+	AQI_RANGES: {
 		GOOD: { LOWER: 0, UPPER: 50 },
 		MODERATE: { LOWER: 51, UPPER: 100 },
 		UNHEALTHY_SENSETIVE: { LOWER: 101, UPPER: 150 },
@@ -182,9 +182,9 @@ const EPA_454 = {
 // https://www.mee.gov.cn/ywgz/fgbz/bz/bzwb/jcffbz/201203/W020120410332725219541.pdf
 const HJ_633 = {
 	IOS_SCALE: "HJ6332012.2204",
-	AQI_LEVEL: EPA_454.AQI_LEVEL,
+	AQI_LEVELS: EPA_454.AQI_LEVELS,
 	SIGNIFICANT_LEVEL: EPA_454.SIGNIFICANT_LEVEL,
-	AQI_RANGE: EPA_454.AQI_RANGE,
+	AQI_RANGES: EPA_454.AQI_RANGES,
 
 	CONCENTRATION_UNITS: {
 		"SO2_24H": POLLUTANT_UNITS.TEXT.UG_M3, "SO2": POLLUTANT_UNITS.TEXT.UG_M3,
@@ -298,9 +298,9 @@ const HJ_633 = {
 // https://aqicn.org/scale/
 const WAQI_INSTANT_CAST = {
 	IOS_SCALE: EPA_454.IOS_SCALE,
-	AQI_LEVEL: EPA_454.AQI_LEVEL,
+	AQI_LEVELS: EPA_454.AQI_LEVELS,
 	SIGNIFICANT_LEVEL: EPA_454.SIGNIFICANT_LEVEL,
-	AQI_RANGE: EPA_454.AQI_RANGE,
+	AQI_RANGES: EPA_454.AQI_RANGES,
 
 	CONCENTRATION_UNITS: {
 		...EPA_454.CONCENTRATION_UNITS,
@@ -873,8 +873,8 @@ async function colorfulClouds(
 
 function appleAqiConverter(standard, airQuality) {
 	const {
-		IOS_SCALE, AQI_LEVEL, SIGNIFICANT_LEVEL,
-		AQI_RANGE, CONCENTRATION_UNITS, CONCENTRATION_BREAKPOINTS,
+		IOS_SCALE, AQI_LEVELS, SIGNIFICANT_LEVEL,
+		AQI_RANGES, CONCENTRATION_UNITS, CONCENTRATION_BREAKPOINTS,
 	} = standard;
 	let SCALE, UG_M3, MG_M3;
 	const pollutants = airQuality?.pollutants;
@@ -910,7 +910,7 @@ function appleAqiConverter(standard, airQuality) {
 	
 			if (!isNaN(co?.amount) && co?.unit && co.unit === UG_M3) {
 				const coAqi = toAqi(
-					HJ_633.AQI_RANGE,
+					HJ_633.AQI_RANGES,
 					HJ_633.CONCENTRATION_BREAKPOINTS,
 					coName,
 					pollutantUnitConverter(co.unit, HJ_633.CONCENTRATION_UNITS.CO, co.amount, null, coName),
@@ -929,7 +929,7 @@ function appleAqiConverter(standard, airQuality) {
 		}
 	
 		const pollutantsWithAqi = pollutantsToAqis(
-			AQI_RANGE,
+			AQI_RANGES,
 			CONCENTRATION_BREAKPOINTS,
 			CONCENTRATION_UNITS,
 			// TODO
@@ -938,8 +938,8 @@ function appleAqiConverter(standard, airQuality) {
 		);
 
 		const aqiIndex = pollutantsWithAqi.index;
-		const aqiLevel = toAqiLevel(AQI_RANGE, AQI_LEVEL, pollutantsWithAqi.index);
-		const aqiCategoryIndex = aqiLevel === AQI_LEVEL.OVER_RANGE ? aqiLevel - 1 : aqiLevel;
+		const aqiLevel = toAqiLevel(AQI_RANGES, AQI_LEVELS, pollutantsWithAqi.index);
+		const aqiCategoryIndex = aqiLevel === AQI_LEVELS.OVER_RANGE ? aqiLevel - 1 : aqiLevel;
 	
 		return toAqiObject(
 			null, null, null, null, null, null, null, null, null, null,
@@ -983,7 +983,7 @@ function waqiToAqi(feedData) {
 	const scale = WAQI_INSTANT_CAST.IOS_SCALE;
 	const aqi = feedData?.aqi ?? -1;
 	const categoryIndex = toAqiLevel(
-		WAQI_INSTANT_CAST.AQI_RANGE, WAQI_INSTANT_CAST.AQI_LEVEL, aqi,
+		WAQI_INSTANT_CAST.AQI_RANGES, WAQI_INSTANT_CAST.AQI_LEVELS, aqi,
 	);
 	const isSignificant = categoryIndex >= WAQI_INSTANT_CAST.SIGNIFICANT_LEVEL;
 	const previousDayComparison = AQI_COMPARISON.UNKNOWN;
