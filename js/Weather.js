@@ -1176,14 +1176,16 @@ async function colorfulClouds(
  * @param {Object} pollutants - array of `{ name, amount, unit }`
  * @param {String} sourceType - `station` or `modeled`
  * @param {String} sourceName - will be displayed in the bottom of details
- * @param {Number} aqi - AQI index
- * @param {Number} yesterdayAqi - yesterday AQI index for comparison
  * @param {String} scale - name of AQI standard
+ * @param {Number} aqi - AQI index
+ * @param {Number} categoryIndex - AQI level starts from 1
+ * @param {boolean} isSignificant - importance of AQI info
+ * @param {Number} previousDayComparison - yesterday AQI index for comparison
  * @param {String} primaryPollutant - name of the primary pollutant
  * @return {Object} object for `outputAQI()`
  */
- function toAqiObject(
-	timestamp = (+ new Date()),
+function toAqiObject(
+	timestamp,
 	language,
 	location,
 	providerLogo,
@@ -1192,8 +1194,11 @@ async function colorfulClouds(
 	sourceType,
 	sourceName,
 	pollutants,
-	aqi,
 	scale,
+	aqi,
+	categoryIndex,
+	isSignificant,
+	previousDayComparison,
 	primaryPollutant,
 ) {
 	const aqiObject = {
@@ -1206,9 +1211,11 @@ async function colorfulClouds(
 		sourceType,
 		sourceName,
 		pollutants,
-		aqi,
-		yesterdayAqi,
 		scale,
+		aqi,
+		categoryIndex,
+		isSignificant,
+		previousDayComparison,
 		primaryPollutant,
 	};
 
@@ -1218,7 +1225,7 @@ async function colorfulClouds(
 	// );
 
 	return aqiObject;
-}
+};
 
 /**
  * Produce a object for `outputNextHour()`
