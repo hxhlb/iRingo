@@ -2185,29 +2185,39 @@ function weatherStatusToType(weatherStatus) {
  * @param {Object} input - input
  * @returns {Object}
  */
-function Metadata(input = { "Version": new Number, "Time": new Date, "Expire": new Number, "Report": true, "Latitude": new Number, "Longitude": new Number, "Language": "", "Name": "", "Logo": "", "Unit": "", "Source": new Number }) {
-	let metadata = {
-		"version": input.Version,
-		"language": input.Language,
-		"longitude": input.Longitude,
-		"latitude": input.Latitude,
+function toMetadata(
+	apiVersion, expireTimestamp, language, location, providerLogo,
+	providerName, readTimestamp, reportedTimestamp, dataSource,
+) {
+	const metadata = { language, "longitude": location.longitude, "latitude": location.latitude };
+	const expireTime = expireTimestamp
+		? convertTime(apiVersion, expireTimestamp, 0, 0) : expireTimestamp;
+	const readTime = readTimestamp
+		? convertTime(apiVersion, readTimestamp, 0, 0) : readTimestamp;
+	const reportedTime = reportedTimestamp
+		? convertTime(apiVersion, reportedTimestamp, 0, 0) : reportedTimestamp;
+
+	switch (apiVersion) {
+		case "v1":
+			metadata.expire_time = expireTime;
+			metadata.provider_logo = providerLogo.forV1;
+			metadata.provider_name = providerName;
+			metadata.read_time = readTime;
+			metadata.reported_time = reportedTime;
+			metadata.data_source = dataSource;
+			break;
+		case "v2":
+		default:
+			metadata.expireTime = expireTime;
+			metadata.providerLogo = providerLogo.forV2;
+			metadata.providerName = providerName;
+			metadata.readTime = readTime;
+			metadata.reportedTime = reportedTime;
+			// no data source for APIv2
+			break;
 	}
-	if (input.Version == 1) {
-		metadata.read_time = convertTime("v"+input.Version, new Date(), 0, 0);
-		metadata.expire_time = convertTime("v"+input.Version, new Date(input?.Time), input.Expire, 0);
-		if (input.Report) metadata.reported_time = convertTime("v"+input.Version, new Date(input?.Time), 0, 0);
-		metadata.provider_name = input.Name;
-		if (input.Logo) metadata.provider_logo = input.Logo;
-		metadata.data_source = input.Source;
-	} else {
-		metadata.readTime = convertTime("v"+input.Version, new Date(), 0, 0);
-		metadata.expireTime = convertTime("v"+input.Version, new Date(input?.Time), input.Expire, 0);
-		if (input.Report) metadata.reportedTime = convertTime("v"+input.Version, new Date(input?.Time), 0, 0);
-		metadata.providerName = input.Name;
-		if (input.Logo) metadata.providerLogo = input.Logo;
-		metadata.units = input.Unit;
-	}
-	return metadata
+
+	return Object.keys(metadata).forEach(key => !metadata[key] && delete metadata[key]);
 };
 
 /**
