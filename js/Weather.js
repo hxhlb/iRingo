@@ -51,7 +51,7 @@ const WEATHER_STATUS = {
 };
 
 const POLLUTANT_UNITS_TEXT = {
-	PPM: "ppm", PPB: "ppb", MG_M3: "milligramPerM3", UG_M3: "microgramPerM3",
+	PPM: "ppm", PPB: "ppb", MG_M3: "milligramsPerM3", UG_M3: "microgramsPerM3",
 };
 
 const POLLUTANT_UNITS = {
