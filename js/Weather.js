@@ -2175,11 +2175,11 @@ function toMetadata(
 ) {
 	const metadata = { language, "longitude": location.longitude, "latitude": location.latitude };
 	const expireTime = expireTimestamp
-		? convertTime(apiVersion, expireTimestamp, 0, 0) : expireTimestamp;
+		? convertTime(apiVersion, new Date(expireTimestamp), 0, 0) : expireTimestamp;
 	const readTime = readTimestamp
-		? convertTime(apiVersion, readTimestamp, 0, 0) : readTimestamp;
+		? convertTime(apiVersion, new Date(readTimestamp), 0, 0) : readTimestamp;
 	const reportedTime = reportedTimestamp
-		? convertTime(apiVersion, reportedTimestamp, 0, 0) : reportedTimestamp;
+		? convertTime(apiVersion, new Date(reportedTimestamp), 0, 0) : reportedTimestamp;
 
 	switch (apiVersion) {
 		case "v1":
