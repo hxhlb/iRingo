@@ -833,10 +833,22 @@ function appleAqiConverter(standard, airQuality) {
 		IOS_SCALE, AQI_LEVEL, SIGNIFICANT_LEVEL,
 		AQI_RANGE, CONCENTRATION_UNITS, CONCENTRATION_BREAKPOINTS,
 	} = standard;
+	let SCALE, INDEX;
 	const pollutants = airQuality?.pollutants;
 
-	if (pollutants && airQuality?.scale !== IOS_SCALE) {
-		if (airQuality.scale === "HJ6332012.2201") {
+	switch (airQuality?.metadata?.version) {
+		case 1:
+			SCALE = "airQualityScale";
+			INDEX = "airQualityIndex";
+			break;
+		case 2:
+		default:
+			SCALE = "scale";
+			INDEX = "index";
+	};
+
+	if (pollutants && airQuality?.[SCALE] !== IOS_SCALE) {
+		if (airQuality[SCALE] === "HJ6332012.2201") {
 			// fix unit of CO from QWeather, usually unit of CO is mg/m3
 			const coName = "CO";
 			const co = pollutants[coName];
@@ -849,7 +861,7 @@ function appleAqiConverter(standard, airQuality) {
 					pollutantUnitConverter(co.unit, HJ_633.CONCENTRATION_UNITS.CO, co.value, null, coName),
 				);
 
-				if (airQuality?.index > -1 && coAqi < airQuality.index) {
+				if (airQuality?.[INDEX] > -1 && coAqi < airQuality[INDEX]) {
 					pollutants[coName].unit = HJ_633.CONCENTRATION_UNITS.CO;
 				}
 			}
