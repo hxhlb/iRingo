@@ -828,6 +828,60 @@ async function colorfulClouds(
 	});
 }
 
+function appleAqiConverter(standard, airQuality) {
+	const {
+		IOS_SCALE, AQI_LEVEL, SIGNIFICANT_LEVEL,
+		AQI_RANGE, CONCENTRATION_UNITS, CONCENTRATION_BREAKPOINTS,
+	} = standard;
+	const pollutants = airQuality?.pollutants;
+
+	if (pollutants && airQuality?.scale !== IOS_SCALE) {
+		if (airQuality.scale === "HJ6332012.2201") {
+			// fix unit of CO from QWeather, usually unit of CO is mg/m3
+			const coName = "CO";
+			const co = pollutants[coName];
+	
+			if (typeof co?.value === "number" && co?.unit && co.unit === POLLUTANT_UNITS.UG_M3) {
+				const coAqi = toAqi(
+					HJ_633.AQI_RANGE,
+					HJ_633.CONCENTRATION_BREAKPOINTS,
+					coName,
+					pollutantUnitConverter(co.unit, HJ_633.CONCENTRATION_UNITS.CO, co.value, null, coName),
+				);
+
+				if (airQuality?.index > -1 && coAqi < airQuality.index) {
+					pollutants[coName].unit = HJ_633.CONCENTRATION_UNITS.CO;
+				}
+			}
+		}
+	
+		const pollutantsWithAqi = pollutantsToAqis(
+			AQI_RANGE,
+			CONCENTRATION_BREAKPOINTS,
+			CONCENTRATION_UNITS,
+			EPA_TEMPERATURE_CELSIUS,
+			Object.values(pollutants),
+		);
+
+		const aqiIndex = pollutantsWithAqi.index;
+		const aqiLevel = toAqiLevel(AQI_RANGE, AQI_LEVEL, pollutantsWithAqi.index);
+		const aqiCategoryIndex = aqiLevel === AQI_LEVEL.OVER_RANGE ? aqiLevel - 1 : aqiLevel;
+	
+		return toAqiObject(
+			null, null, null, null, null, null, null, null,
+			pollutants, IOS_SCALE, aqiIndex, aqiCategoryIndex,
+			aqiLevel >= SIGNIFICANT_LEVEL, AQI_COMPARISON.UNKNOWN,
+			pollutantsWithAqi.primaryPollutant,
+		);
+	} else {
+		$.logErr(
+			`❗️ ${$.name}: ${appleAqiConverter.name}执行失败，没有污染物数据。`,
+			`pollutants = ${JSON.stringify(pollutants)}`, ""
+		);
+		return airQuality;
+	}
+};
+
 /**
  * differ rain or snow from ColorfulClouds hourly skycons
  * https://docs.caiyunapp.com/docs/tables/skycon/
