@@ -369,7 +369,7 @@ const WAQI_INSTANT_CAST = {
 						$.log(`🚧 ${$.name}, 工作模式：本地转换`, "");
 
 						if (airQuality) {
-							modifiedAirQuality = outputAqi(
+							modifiedAirQuality = await outputAqi(
 								// TODO
 								Params.ver, appleAqiConverter(WAQI_INSTANT_CAST, airQuality),
 							);
