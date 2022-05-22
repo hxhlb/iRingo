@@ -897,6 +897,11 @@ function appleAqiConverter(standard, airQuality) {
 			// fix unit of CO from QWeather, usually unit of CO is mg/m3
 			const coName = "CO";
 			const co = pollutants[coName];
+
+			$.log(
+				`🚧 ${$.name}, ${appleAqiConverter.name}: `,
+				`typeof co?.amount = ${typeof co?.amount}`, "",
+			);
 	
 			if (!isNaN(co?.amount) && co?.unit && co.unit === UG_M3) {
 				const coAqi = toAqi(
