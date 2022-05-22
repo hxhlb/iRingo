@@ -54,6 +54,8 @@ const POLLUTANT_UNITS = {
 	PPM: "ppm", PPB: "ppb", MG_M3: "milligramPerM3", UG_M3: "microgramPerM3",
 };
 
+const AQI_COMPARISON = { UNKNOWN: "unknown", WORSE: "worse", SAME: "same", BETTER: "better" };
+
 // https://www.govinfo.gov/content/pkg/CFR-2011-title40-vol2/pdf/CFR-2011-title40-vol2-chapI.pdf
 // https://cfpub.epa.gov/ncer_abstracts/index.cfm/fuseaction/display.files/fileid/14285
 const EPA_TEMPERATURE_CELSIUS = 25;
