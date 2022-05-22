@@ -882,6 +882,41 @@ function appleAqiConverter(standard, airQuality) {
 	}
 };
 
+function waqiToAqi(feedData) {
+	const serverTime = parseInt(feedData?.time?.v);
+	const serverTimestamp = !isNaN(serverTime) ? serverTime * 1000 : (+ new Date());
+	// language from WAQI is always English with local language based on observation stations
+	const language = "en_US";
+	const coordinates = feedData?.city?.geo;
+	const location = {
+		longitude: coordinates?.[0] ?? -1,
+		latitude: coordinates?.[1] ?? -1,
+	};
+	const providerLogo = {
+		forV1: "https://waqi.info/images/logo.png",
+		forV2: "https://raw.githubusercontent.com/VirgilClyne/iRingo/main/image/waqi.info.logo.png",
+	};
+	const providerName = feedData?.city?.name;
+	const url = feedData?.city?.url ?? "https://aqicn.org/";
+	const sourceType = "station";
+	const sourceName = "World Air Quality Index Project";
+
+	const scale = WAQI_INSTANT_CAST.IOS_SCALE;
+	const aqi = feedData?.aqi ?? -1;
+	const categoryIndex = toAqiLevel(
+		WAQI_INSTANT_CAST.AQI_RANGE, WAQI_INSTANT_CAST.AQI_LEVEL, aqi,
+	);
+	const isSignificant = categoryIndex >= WAQI_INSTANT_CAST.SIGNIFICANT_LEVEL;
+	const previousDayComparison = AQI_COMPARISON.UNKNOWN;
+	const primaryPollutant = feedData?.dominentpol;
+
+	return toAqiObject(
+		serverTimestamp, language, location, providerLogo, providerName, url, sourceType, sourceName,
+		// do we actually need convert AQI back to pollutant amounts?
+		null, scale, aqi, categoryIndex, isSignificant, previousDayComparison, primaryPollutant,
+	);
+};
+
 /**
  * differ rain or snow from ColorfulClouds hourly skycons
  * https://docs.caiyunapp.com/docs/tables/skycon/
