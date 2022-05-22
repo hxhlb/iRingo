@@ -1913,10 +1913,17 @@ function getMolecularWeight(chemicalFormula) {
 };
 
 function toTextStyleUnit(unit) {
-	return unit.replace("µg", "microgram")
-		.replace("mg", "milligram")
-		.replace("\/", "Per")
-		.replace("m3", "M3");
+	for (const [key, value] of Object.entries(POLLUTANT_UNITS.SLASH)) {
+		if (unit === value) {
+			return POLLUTANT_UNITS.TEXT[key];
+		}
+	}
+
+	$.logErr(
+		`❗️ ${$.name}, ${toTextStyleUnit.name}: unsupported unit, `,
+		`unit = ${unit}`, "",
+	);
+	return unit;
 };
 
 function toChemicalFormula(name) {
