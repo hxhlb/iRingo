@@ -1471,6 +1471,7 @@ function toNextHourObject(
  */
 async function outputAqi(apiVersion, aqiObject) {
 	$.log(`⚠️ ${$.name}, ${outputAqi.name}检测`, `AQI data ${apiVersion}`, '');
+	$.log(`🚧 ${$.name}, ${outputAqi.name}: `, `aqiObject = ${JSON.stringify(aqiObject)}`, '');
 
 	// 创建对象
 	const airQuality = { "name": "AirQuality" };
