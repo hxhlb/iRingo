@@ -2258,7 +2258,10 @@ function toMetadata(
 			break;
 	}
 
-	Object.keys(metadata).forEach(key => !metadata[key] && delete metadata[key]);
+	Object.keys(metadata).forEach(key => 
+		(metadata[key] === null || metadata[key] === undefined || metadata[key] === NaN)
+			&& delete metadata[key]
+	);
 	return metadata;
 };
 
