@@ -1953,10 +1953,6 @@ function toTextStyleUnit(unit) {
 		}
 	}
 
-	$.logErr(
-		`❗️ ${$.name}, ${toTextStyleUnit.name}: unsupported unit, `,
-		`unit = ${unit}`, "",
-	);
 	return unit;
 };
 
@@ -1976,7 +1972,7 @@ function toChemicalFormula(name) {
 function pollutantUnitConverter(unit, unitToConvert, amount, temperatureCelsius, chemicalFormula) {
 	const INVERSE_GAS_CONSTANT = 12.187;
 	const ZERO_CELSIUS_IN_KELVIN = 273.15;
-	const { PPM, PPB, MG_M3, UG_M3 } = POLLUTANT_UNITS;
+	const { PPM, PPB, MG_M3, UG_M3 } = POLLUTANT_UNITS.TEXT;
 
 	function ppmToMgM3(amount, temperatureCelsius, chemicalFormula) {
 		return amount * INVERSE_GAS_CONSTANT * getMolecularWeight(chemicalFormula)
