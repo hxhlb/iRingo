@@ -2103,9 +2103,10 @@ function toAqi(aqiRanges, concentrationBreakpoints, pollutantName, pollutantValu
 	};
 
 	// over range!
-	const findMax = (previous, current) => previous.UPPER > current.UPPER ? previous : current;
+	const findMax = (previous, current) => current.UPPER > previous.UPPER ? current : previous;
 	const aqiRange = Object.values(aqiRanges).reduce(findMax);
-	const concentrationRange = Object.values(concentrationBreakpoints).reduce(findMax);
+	const concentrationRange = Object.values(concentrationBreakpoints[pollutantName])
+		.reduce(findMax);
 	// should we use 500 instead of calculation?
 	return Math.round(pollutantValue - concentrationRange.UPPER + aqiRange.UPPER);
 };
