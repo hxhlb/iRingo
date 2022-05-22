@@ -68,7 +68,7 @@ const EPA_TEMPERATURE_CELSIUS = 25;
 // EPA 454/B-18-007
 // https://www.airnow.gov/sites/default/files/2020-05/aqi-technical-assistance-document-sept2018.pdf
 const EPA_454 = {
-	IOS_SCALE: "EPA_NowCast.2201",
+	IOS_SCALE: "EPA_NowCast.2204",
 
 	AQI_LEVEL: {
 		INVALID: -1,
@@ -181,7 +181,7 @@ const EPA_454 = {
 // HJ 633——2012
 // https://www.mee.gov.cn/ywgz/fgbz/bz/bzwb/jcffbz/201203/W020120410332725219541.pdf
 const HJ_633 = {
-	IOS_SCALE: "HJ6332012.2201",
+	IOS_SCALE: "HJ6332012.2204",
 	AQI_LEVEL: EPA_454.AQI_LEVEL,
 	SIGNIFICANT_LEVEL: EPA_454.SIGNIFICANT_LEVEL,
 	AQI_RANGE: EPA_454.AQI_RANGE,
@@ -297,7 +297,7 @@ const HJ_633 = {
 
 // https://aqicn.org/scale/
 const WAQI_INSTANT_CAST = {
-	IOS_SCALE: "EPA_NowCast.2201",
+	IOS_SCALE: EPA_454.IOS_SCALE,
 	AQI_LEVEL: EPA_454.AQI_LEVEL,
 	SIGNIFICANT_LEVEL: EPA_454.SIGNIFICANT_LEVEL,
 	AQI_RANGE: EPA_454.AQI_RANGE,
