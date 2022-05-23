@@ -444,17 +444,15 @@ const WAQI_INSTANT_CAST = {
 							aqi,
 						);
 
-						// add 45 minutes for possible data delay
-						const yesterdayTimestamp = reportedTimestamp - 1000 * 60 * 60 * 24 + 1000 * 60 * 45;
+						const yesterdayTimestamp = reportedTimestamp - 1000 * 60 * 60 * 24;
 
 						if (Caches?.aqis) {
-							const nowHour = (new Date()).getHours;
-
 							const key = Object.keys(Caches.aqis).find(timestamp =>
-								(new Date(timestamp)).getHours === nowHour
+								// for possible data delay
+								yesterdayTimestamp - 1000 * 60 * 15 < timestamp < yesterdayTimestamp  + 1000 * 60 * 45
 							);
 
-							const cache = Caches.aqis[key].find(value =>
+							const cache = Caches.aqis[key]?.find(value =>
 								// cannot get station name
 								["和风天气", "QWeather", "BreezoMeter"].includes(data[AIR_QUALITY]?.source)
 									// https://www.mee.gov.cn/gkml/hbb/bwj/201204/W020140904493567314967.pdf
@@ -465,7 +463,7 @@ const WAQI_INSTANT_CAST = {
 
 							// TODO
 							data[AIR_QUALITY].previousDayComparison = compareAqi(
-								EPA_454.AQI_RANGES, EPA_454.AQI_LEVELS, data[AIR_QUALITY].index, cache.aqi,
+								EPA_454.AQI_RANGES, EPA_454.AQI_LEVELS, data[AIR_QUALITY].index, cache?.aqi,
 							);
 						}
 
@@ -483,8 +481,13 @@ const WAQI_INSTANT_CAST = {
 											token,
 											{ latitude: Params.lat, longitude: Params.lng },
 											"weather",
+											// add 45 minutes for possible data delay
 											// ms to s
-											{ "unit": "metric:v2", "hourlysteps": 1, "begin": yesterdayTimestamp / 1000 },
+											{
+												"unit": "metric:v2",
+												"hourlysteps": 1,
+												"begin": (yesterdayTimestamp + 1000 * 60 * 45) / 1000,
+											},
 										);
 	
 										if (
