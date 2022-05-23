@@ -5,12 +5,17 @@ README:https://github.com/VirgilClyne/iRingo
 const $ = new Env("Apple Weather v3.2.9");
 const URL = new URLs();
 const DataBase = {
-	"Weather":{"Switch":true,"NextHour":{"Switch":true,"Mode":"www.weatherol.cn","HTTPHeaders":{"Content-Type":"application/x-www-form-urlencoded","User-Agent":"Mozilla/5.0 (iPhone; CPU iPhone OS 15_1_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.1 Mobile/15E148 Safari/604.1"},"ColorfulClouds":{"Auth":null},},"AQI":{"Switch":true,"Mode":"WAQI Public","Location":"Station","Auth":null,"Scale":"EPA_NowCast.2204","Comparison":{"Switch":true,"Mode":"Cache"}},"Map":{"AQI":false}},
-	"Siri":{"Switch":true,"CountryCode":"TW","Domains":["web","itunes","app_store","movies","restaurants","maps"],"Functions":["flightutilities","lookup","mail","messages","news","safari","siri","spotlight","visualintelligence"],"Safari_Smart_History":true},
-	"Pollutants":{"co":"CO","no":"NO","no2":"NO2","so2":"SO2","o3":"OZONE","nox":"NOX","pm25":"PM2.5","pm10":"PM10","other":"OTHER"}
+	"Location":{
+		"Settings":{"Switch":true,"CountryCode":"US","Config":{"GEOAddressCorrection":true,"LookupMaxParametersCount":true,"LocalitiesAndLandmarks":true,"PedestrianAR":true,"6694982d2b14e95815e44e970235e230":true,"OpticalHeading":true,"UseCLPedestrianMapMatchedLocations":true}}
+	},
+	"Weather":{
+		"Settings":{"Switch":true,"NextHour":{"Switch":true,"Mode":"www.weatherol.cn","HTTPHeaders":{"Content-Type":"application/x-www-form-urlencoded","User-Agent":"Mozilla/5.0 (iPhone; CPU iPhone OS 15_1_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.1 Mobile/15E148 Safari/604.1"},"ColorfulClouds":{"Auth":null},},"AQI":{"Switch":true,"Mode":"WAQI Public","Location":"Station","Auth":null,"Scale":"EPA_NowCast.2204","Comparison":{"Switch":true,"Mode":"Cache"}},"Map":{"AQI":false}},
+		"Configs":{"Pollutants":{"co":"CO","no":"NO","no2":"NO2","so2":"SO2","o3":"OZONE","nox":"NOX","pm25":"PM2.5","pm10":"PM10","other":"OTHER"}}
+	},
+	"Siri":{
+		"Settings":{"Switch":true,"CountryCode":"SG","Domains":["web","itunes","app_store","movies","restaurants","maps"],"Functions":["flightutilities","lookup","mail","messages","news","safari","siri","spotlight","visualintelligence"],"Safari_Smart_History":true}
+	}
 };
-var { url } = $request;
-var { body } = $response;
 
 const WEATHER_TYPES = { CLEAR: "clear", RAIN: "rain", SNOW: "snow", SLEET: "sleet" };
 const PRECIPITATION_LEVEL = { INVALID: -1, NO: 0, LIGHT: 1, MODERATE: 2, HEAVY: 3, STORM: 4 };
@@ -341,11 +346,11 @@ const WAQI_INSTANT_CAST = {
 
 /***************** Processing *****************/
 !(async () => {
-	const { Settings, Caches } = await setENV("iRingo", "Weather", DataBase);
+	const { Settings, Caches, Configs } = await setENV("iRingo", "Weather", DataBase);
 	if (Settings.Switch) {
-		url = URL.parse(url);
+		let url = URL.parse($request.url);
 		const Params = await getParams(url.path);
-		let data = JSON.parse(body);
+		let data = JSON.parse($response.body);
 		const Status = await getStatus(data);
 		// AQI
 		if (Settings.AQI.Switch) {
@@ -607,11 +612,14 @@ const WAQI_INSTANT_CAST = {
 				}
 			}
 		};
-		body = JSON.stringify(data);
+		$response.body = JSON.stringify(data);
 	}
 })()
 	.catch((e) => $.logErr(e))
-	.finally(() => $.done({ body }))
+	.finally(() => {
+		if ($.isQuanX()) $.done({ body: $response.body })
+		else $.done($response)
+	})
 
 /***************** Async Function *****************/
 /**
@@ -634,15 +642,15 @@ async function getENV(t,e,n){let i=$.getjson(t,n),s=i?.[e]?.Settings||n?.[e]?.Se
  */
  async function setENV(name, platform, database) {
 	$.log(`⚠ ${$.name}, Set Environment Variables`, "");
-	const { Settings, Caches = {} } = await getENV(name, platform, database);
+	const { Settings, Caches = {}, Configs} = await getENV(name, platform, database);
 	/***************** Prase *****************/
 	Settings.Switch = JSON.parse(Settings.Switch) // BoxJs字符串转Boolean
 	Settings.NextHour.Switch = JSON.parse(Settings.NextHour.Switch) // BoxJs字符串转Boolean
 	Settings.NextHour.HTTPHeaders = typeof Settings.NextHour?.HTTPHeaders === "string" ||
 		Settings.NextHour?.HTTPHeaders instanceof String ?
-			JSON.parse(Settings.NextHour.HTTPHeaders) : database.Weather.NextHour.HTTPHeaders // BoxJs字符串转Object
+			JSON.parse(Settings.NextHour.HTTPHeaders) : database.Weather.Settings.NextHour.HTTPHeaders // BoxJs字符串转Object
 	Settings.AQI.Switch = JSON.parse(Settings.AQI.Switch) // BoxJs字符串转Boolean
-	Settings.AQI.Comparison = Settings.AQI?.Comparison ?? database.Weather.AQI.Comparison
+	Settings.AQI.Comparison = Settings.AQI?.Comparison ?? database.Weather.Settings.AQI.Comparison
 	Settings.AQI.Comparison.Switch = typeof Settings.AQI.Comparison?.Switch === "boolean"
 		? Settings.AQI.Comparison.Switch : JSON.parse(Settings.AQI.Comparison.Switch) // BoxJs字符串转Boolean
 	Settings.Map.AQI = JSON.parse(Settings.Map.AQI) // BoxJs字符串转Boolean
@@ -1116,7 +1124,7 @@ function waqiToAqi(feedData) {
 	);
 	const isSignificant = categoryIndex >= WAQI_INSTANT_CAST.SIGNIFICANT_LEVEL;
 	const previousDayComparison = AQI_COMPARISON.UNKNOWN;
-	const primaryPollutant = DataBase.Pollutants[feedData?.dominentpol];
+	const primaryPollutant = DataBase.Weather.Configs.Pollutants[feedData?.dominentpol];
 
 	return toAqiObject(
 		readTimestamp, reportedTimestamp, expireTimestamp, language, location, providerLogo,
