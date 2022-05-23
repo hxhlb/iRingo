@@ -952,19 +952,33 @@ function appleAqiConverter(standard, airQuality) {
 		IOS_SCALE, AQI_LEVELS, SIGNIFICANT_LEVEL,
 		AQI_RANGES, CONCENTRATION_UNITS, CONCENTRATION_BREAKPOINTS,
 	} = standard;
-	let SCALE, UG_M3;
+	let SCALE, UG_M3, PROVIER_NAME;
 	const pollutants = airQuality?.pollutants;
 
 	switch (airQuality?.metadata?.version) {
 		case 1:
 			SCALE = "airQualityScale";
 			UG_M3 = POLLUTANT_UNITS.SLASH.UG_M3;
+			PROVIER_NAME = "provider_name";
 			break;
 		case 2:
 		default:
 			SCALE = "scale";
 			UG_M3 = POLLUTANT_UNITS.TEXT.UG_M3;
+			PROVIER_NAME = "providerName";
+			break;
 	};
+
+	function toProviderName(providerName, source) {
+		switch (providerName) {
+			case "和风天气":
+				return `${source}（${providerName}）`;
+			case "QWeather":
+				return `${source} (${providerName})`;
+			default:
+				return providerName;
+		}
+	}
 
 	if (pollutants && airQuality?.[SCALE] !== IOS_SCALE) {
 		$.log(
@@ -1021,7 +1035,8 @@ function appleAqiConverter(standard, airQuality) {
 		const aqiCategoryIndex = aqiLevel === AQI_LEVELS.OVER_RANGE ? aqiLevel - 1 : aqiLevel;
 	
 		return toAqiObject(
-			null, null, null, null, null, null, null, null, null, null,
+			null, null, null, null, null, null,
+			toProviderName(airQuality?.[PROVIER_NAME], airQuality?.source), null, null, null,
 			pollutants, IOS_SCALE, aqiIndex, aqiCategoryIndex,
 			aqiLevel >= SIGNIFICANT_LEVEL, AQI_COMPARISON.UNKNOWN,
 			pollutantsWithAqi.primaryPollutant,
