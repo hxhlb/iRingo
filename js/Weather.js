@@ -876,20 +876,18 @@ function appleAqiConverter(standard, airQuality) {
 		IOS_SCALE, AQI_LEVELS, SIGNIFICANT_LEVEL,
 		AQI_RANGES, CONCENTRATION_UNITS, CONCENTRATION_BREAKPOINTS,
 	} = standard;
-	let SCALE, UG_M3, MG_M3;
+	let SCALE, UG_M3;
 	const pollutants = airQuality?.pollutants;
 
 	switch (airQuality?.metadata?.version) {
 		case 1:
 			SCALE = "airQualityScale";
 			UG_M3 = POLLUTANT_UNITS.SLASH.UG_M3;
-			MG_M3 = POLLUTANT_UNITS.SLASH.MG_M3;
 			break;
 		case 2:
 		default:
 			SCALE = "scale";
 			UG_M3 = POLLUTANT_UNITS.TEXT.UG_M3;
-			MG_M3 = POLLUTANT_UNITS.TEXT.MG_M3;
 	};
 
 	if (pollutants && airQuality?.[SCALE] !== IOS_SCALE) {
