@@ -604,8 +604,9 @@ const WAQI_INSTANT_CAST = {
 		Settings.NextHour?.HTTPHeaders instanceof String ?
 			JSON.parse(Settings.NextHour.HTTPHeaders) : database.Weather.NextHour.HTTPHeaders // BoxJs字符串转Object
 	Settings.AQI.Switch = JSON.parse(Settings.AQI.Switch) // BoxJs字符串转Boolean
-	Settings.AQI.Comparison.Switch = Settings.AQI?.Comparison?.Switch
-		&& JSON.parse(Settings.AQI.Comparison.Switch) // BoxJs字符串转Boolean
+	Settings.AQI.Comparison = Settings.AQI?.Comparison ?? database.Weather.AQI.Comparison
+	Settings.AQI.Comparison.Switch = typeof Settings.AQI.Comparison?.Switch === "boolean"
+		? Settings.AQI.Comparison.Switch : JSON.parse(Settings.AQI.Comparison.Switch) // BoxJs字符串转Boolean
 	Settings.Map.AQI = JSON.parse(Settings.Map.AQI) // BoxJs字符串转Boolean
 	$.log(`🎉 ${$.name}, Set Environment Variables`, `Settings: ${typeof Settings}`, `Settings内容: ${JSON.stringify(Settings)}`, "");
 	return Settings
