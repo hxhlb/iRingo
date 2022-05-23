@@ -447,14 +447,14 @@ const WAQI_INSTANT_CAST = {
 						// add 45 minutes for possible data delay
 						const yesterdayTimestamp = reportedTimestamp - 1000 * 60 * 60 * 24 + 1000 * 60 * 45;
 
-						if (Caches?.aqi) {
+						if (Caches?.aqis) {
 							const nowHour = (new Date()).getHours;
 
-							const key = Object.keys(Caches.aqi).find(timestamp =>
+							const key = Object.keys(Caches.aqis).find(timestamp =>
 								(new Date(timestamp)).getHours === nowHour
 							);
 
-							const cache = Caches.aqi[key].find(value =>
+							const cache = Caches.aqis[key].find(value =>
 								// cannot get station name
 								["和风天气", "QWeather", "BreezoMeter"].includes(data[AIR_QUALITY]?.source)
 									// https://www.mee.gov.cn/gkml/hbb/bwj/201204/W020140904493567314967.pdf
@@ -2023,7 +2023,7 @@ function cacheAqi(caches, timestamp, location, stationName, aqi) {
 		`🚧 ${$.name}, ${cacheAqi.name}：new Date(timestamp) = ${new Date(timestamp)}, aqi = ${aqi}`, "",
 	);
 
-	const aqis = caches?.aqi;
+	const aqis = caches?.aqis;
 	const aqiCache = Array.isArray(aqis?.[timestamp]) ? aqis[timestamp] : [];
 
 	aqiCache.push({ location, stationName, aqi });
@@ -2034,10 +2034,9 @@ function cacheAqi(caches, timestamp, location, stationName, aqi) {
 		Object.keys(aqis).forEach(key => key < cacheLimit && delete aqis[key]);
 	}
 
-	$.setjson(
-		{ ...caches, "aqi": { ...aqis, ...{ timestamp: aqiCache } } },
-		"@iRingo.Weather.Caches",
-	);
+	aqis[timestamp] = aqiCache;
+
+	$.setjson({ ...caches, "aqis": aqis }, "@iRingo.Weather.Caches");
 };
 
 /**
