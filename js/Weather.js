@@ -2029,7 +2029,16 @@ function cacheAqi(caches, timestamp, location, stationName, aqi) {
 	const aqis = caches?.aqis ?? {};
 	const aqiCache = Array.isArray(aqis?.[timestamp]) ? aqis[timestamp] : [];
 
-	aqiCache.push({ location, stationName, aqi });
+	let finder;
+	if (["和风天气", "QWeather", "BreezoMeter"].includes(source)) {
+		finder = cache =>
+			cache.location.longitude === location.longitude
+				&& cache.location.latitude === location.latitude;
+	} else {
+		finder = cache => cache.stationName === stationName;
+	}
+
+	!aqiCache.find(finder) && aqiCache.push({ location, stationName, aqi });
 
 	// delete the cache before two day ago
 	const cacheLimit = (+ new Date()) - 1000 * 60 * 60 * 48;
