@@ -2023,16 +2023,14 @@ function cacheAqi(caches, timestamp, location, stationName, aqi) {
 		`🚧 ${$.name}, ${cacheAqi.name}：new Date(timestamp) = ${new Date(timestamp)}, aqi = ${aqi}`, "",
 	);
 
-	const aqis = caches?.aqis;
+	const aqis = caches?.aqis ?? {};
 	const aqiCache = Array.isArray(aqis?.[timestamp]) ? aqis[timestamp] : [];
 
 	aqiCache.push({ location, stationName, aqi });
 
-	if (aqis) {
-		// delete the cache before two day ago
-		const cacheLimit = (+ new Date()) - 1000 * 60 * 60 * 48;
-		Object.keys(aqis).forEach(key => key < cacheLimit && delete aqis[key]);
-	}
+	// delete the cache before two day ago
+	const cacheLimit = (+ new Date()) - 1000 * 60 * 60 * 48;
+	Object.keys(aqis).forEach(key => key < cacheLimit && delete aqis[key]);
 
 	aqis[timestamp] = aqiCache;
 
