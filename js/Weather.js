@@ -437,7 +437,7 @@ const WAQI_INSTANT_CAST = {
 							const token = Settings.NextHour?.ColorfulClouds?.Auth;
 
 							if (token) {
-								const data = await colorfulClouds(
+								const aqiData = await colorfulClouds(
 									Settings.NextHour?.HTTPHeaders,
 									// TODO
 									"v2.6",
@@ -449,17 +449,19 @@ const WAQI_INSTANT_CAST = {
 								);
 
 								if (
-									data?.result?.realtime?.air_quality?.aqi?.usa
-										&& data?.result?.hourly?.air_quality?.aqi?.[0]?.value?.usa
+									aqiData?.result?.realtime?.air_quality?.aqi?.usa
+										&& aqiData?.result?.hourly?.air_quality?.aqi?.[0]?.value?.usa
 								) {
-									const currentAqi = parseInt(data.result.realtime.air_quality.aqi.usa);
-									const yesterdayAqi = parseInt(data.result.hourly.air_quality.aqi[0].value.usa);
+									const currentAqi = parseInt(aqiData.result.realtime.air_quality.aqi.usa);
+									const yesterdayAqi =
+										parseInt(aqiData.result.hourly.air_quality.aqi[0].value.usa);
 
 									if (!isNaN(currentAqi) && !isNaN(yesterdayAqi)) {
 										$.log(
 											`🚧 ${$.name}, 比较昨天AQI（彩云天气）：`,
 											`当前AQI：${currentAqi}`,
-											`${data.result.hourly.air_quality.aqi[0].datetime}时的AQI：${yesterdayAqi}`, ""
+											`${aqiData.result.hourly.air_quality.aqi[0].datetime}时的AQI：${yesterdayAqi}`,
+											"",
 										);
 
 										const currentAqiLevel =
