@@ -646,13 +646,9 @@ async function getENV(t,e,n){let i=$.getjson(t,n),s=i?.[e]?.Settings||n?.[e]?.Se
 	/***************** Prase *****************/
 	Settings.Switch = JSON.parse(Settings.Switch) // BoxJs字符串转Boolean
 	Settings.NextHour.Switch = JSON.parse(Settings.NextHour.Switch) // BoxJs字符串转Boolean
-	Settings.NextHour.HTTPHeaders = typeof Settings.NextHour?.HTTPHeaders === "string" ||
-		Settings.NextHour?.HTTPHeaders instanceof String ?
-			JSON.parse(Settings.NextHour.HTTPHeaders) : database.Weather.Settings.NextHour.HTTPHeaders // BoxJs字符串转Object
+	Settings.NextHour.HTTPHeaders = JSON.parse(Settings.NextHour.HTTPHeaders) // BoxJs字符串转Object
 	Settings.AQI.Switch = JSON.parse(Settings.AQI.Switch) // BoxJs字符串转Boolean
-	Settings.AQI.Comparison = Settings.AQI?.Comparison ?? database.Weather.Settings.AQI.Comparison
-	Settings.AQI.Comparison.Switch = typeof Settings.AQI.Comparison?.Switch === "boolean"
-		? Settings.AQI.Comparison.Switch : JSON.parse(Settings.AQI.Comparison.Switch) // BoxJs字符串转Boolean
+	Settings.AQI.Comparison.Switch = JSON.parse(Settings.AQI.Comparison.Switch) // BoxJs字符串转Boolean
 	Settings.Map.AQI = JSON.parse(Settings.Map.AQI) // BoxJs字符串转Boolean
 	$.log(`🎉 ${$.name}, Set Environment Variables`, `Settings: ${typeof Settings}`, `Settings内容: ${JSON.stringify(Settings)}`, "");
 	return { Settings, Caches, Configs }
