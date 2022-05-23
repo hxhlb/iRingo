@@ -2030,7 +2030,7 @@ function cacheAqi(caches, timestamp, location, stationName, aqi) {
 	const aqiCache = Array.isArray(aqis?.[timestamp]) ? aqis[timestamp] : [];
 
 	let finder;
-	if (["和风天气", "QWeather", "BreezoMeter"].includes(source)) {
+	if (["和风天气", "QWeather", "BreezoMeter"].includes(stationName)) {
 		finder = cache =>
 			cache.location.longitude === location.longitude
 				&& cache.location.latitude === location.latitude;
