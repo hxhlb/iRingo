@@ -410,7 +410,7 @@ const WAQI_INSTANT_CAST = {
 					};
 
 					if (
-						Settings.AQI?.Comparison?.Switch
+						Params.ver !== "v1" && Settings.AQI?.Comparison?.Switch
 							&& data[AIR_QUALITY]?.previousDayComparison === AQI_COMPARISON.UNKNOWN
 					) {
 						// TODO: search cache

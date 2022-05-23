@@ -207,7 +207,7 @@
 					"name": "[空气质量]对比昨日开关",
 					"val": true,
 					"type": "boolean",
-					"desc": "对比昨日同时段的AQI数据"
+					"desc": "对比昨日同时段的AQI数据，仅支持iOS 15以上系统"
 				},
 				{
 					"id": "@iRingo.Weather.AQI.Comparison.Mode",
