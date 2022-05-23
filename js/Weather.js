@@ -624,7 +624,9 @@ const WAQI_INSTANT_CAST = {
  */
  async function setENV(name, platform, database) {
 	$.log(`⚠ ${$.name}, Set Environment Variables`, "");
-	let { Settings, Caches = {} } = await getENV(name, platform, database);
+	let envs = await getENV(name, platform, database);
+	$.log(`⚠ ${$.name}, envs = ${JSON.stringify(envs)}`, "");
+	const { Settings, Caches = {} } = envs;
 	/***************** Prase *****************/
 	Settings.Switch = JSON.parse(Settings.Switch) // BoxJs字符串转Boolean
 	Settings.NextHour.Switch = JSON.parse(Settings.NextHour.Switch) // BoxJs字符串转Boolean
