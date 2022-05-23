@@ -463,12 +463,14 @@ const WAQI_INSTANT_CAST = {
 									: value.stationName === data[AIR_QUALITY]?.source
 							);
 
-							data[AIR_QUALITY].previousDayComparison =
-								compareAqi(cache.aqi, data[AIR_QUALITY].index);
+							// TODO
+							data[AIR_QUALITY].previousDayComparison = compareAqi(
+								EPA_454.AQI_RANGES, EPA_454.AQI_LEVELS, data[AIR_QUALITY].index, cache.aqi,
+							);
 						}
 
 						// no cache data
-						if (data[AIR_QUALITY]?.previousDayComparison === AQI_COMPARISON.UNKNOWN) {
+						if (data[AIR_QUALITY].previousDayComparison === AQI_COMPARISON.UNKNOWN) {
 							switch (Settings.AQI?.Comparison?.Mode) {
 								case "api.caiyunapp.com":
 									const token = Settings.NextHour?.ColorfulClouds?.Auth;
@@ -500,9 +502,11 @@ const WAQI_INSTANT_CAST = {
 													`${aqiData.result.hourly.air_quality.aqi[0].datetime}时的AQI：${yesterdayAqi}`,
 													"",
 												);
-	
-												data[AIR_QUALITY].previousDayComparison =
-													compareAqi(currentAqi, yesterdayAqi);
+
+												// TODO
+												data[AIR_QUALITY].previousDayComparison = compareAqi(
+													EPA_454.AQI_RANGES, EPA_454.AQI_LEVELS, currentAqi, yesterdayAqi,
+												);
 												break;
 											}
 										}
@@ -2070,14 +2074,12 @@ function compareAqi(aqiRange, aqiLevel, aqiA, aqiB) {
 		return AQI_COMPARISON.UNKNOWN;
 	}
 
-	const currentAqiLevel =
-		toAqiLevel(aqiRange, aqiLevel, aqiA);
-	const yesterdayAqiLevel =
-		toAqiLevel(aqiRange, aqiLevel, aqiB);
+	const aqiALevel = toAqiLevel(aqiRange, aqiLevel, aqiA);
+	const aqiBLevel = toAqiLevel(aqiRange, aqiLevel, aqiB);
 
-	if (currentAqiLevel > yesterdayAqiLevel) {
+	if (aqiALevel > aqiBLevel) {
 		return AQI_COMPARISON.WORSE;
-	} else if (currentAqiLevel < yesterdayAqiLevel) {
+	} else if (aqiALevel < aqiBLevel) {
 		return AQI_COMPARISON.BETTER;
 	} else {
 		return AQI_COMPARISON.SAME;
