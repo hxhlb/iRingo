@@ -2024,9 +2024,11 @@ function cacheAqi(caches, timestamp, location, stationName, aqi) {
 
 	aqiCache.push({ location, stationName, aqi });
 
-	// delete the cache before two day ago
-	const cacheLimit = (+ new Date()) - 1000 * 60 * 60 * 48;
-	Object.keys(aqis).forEach(key => key < cacheLimit && delete aqis[key]);
+	if (aqis) {
+		// delete the cache before two day ago
+		const cacheLimit = (+ new Date()) - 1000 * 60 * 60 * 48;
+		Object.keys(aqis).forEach(key => key < cacheLimit && delete aqis[key]);
+	}
 
 	$.setjson(
 		{ ...caches, "aqi": { ...aqis, ...{ timestamp: aqiCache } } },
