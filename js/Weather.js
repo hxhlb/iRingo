@@ -1036,7 +1036,7 @@ function appleAqiConverter(standard, airQuality) {
 	
 		return toAqiObject(
 			null, null, null, null, null, null,
-			toProviderName(airQuality?.[PROVIER_NAME], airQuality?.source), null, null, null,
+			toProviderName(airQuality?.metadata?.[PROVIER_NAME], airQuality?.source), null, null, null,
 			pollutants, IOS_SCALE, aqiIndex, aqiCategoryIndex,
 			aqiLevel >= SIGNIFICANT_LEVEL, AQI_COMPARISON.UNKNOWN,
 			pollutantsWithAqi.primaryPollutant,
