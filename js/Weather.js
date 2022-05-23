@@ -624,7 +624,7 @@ const WAQI_INSTANT_CAST = {
  */
  async function setENV(name, platform, database) {
 	$.log(`⚠ ${$.name}, Set Environment Variables`, "");
-	let Settings = await getENV(name, platform, database);
+	let { Settings, Caches = {} } = await getENV(name, platform, database);
 	/***************** Prase *****************/
 	Settings.Switch = JSON.parse(Settings.Switch) // BoxJs字符串转Boolean
 	Settings.NextHour.Switch = JSON.parse(Settings.NextHour.Switch) // BoxJs字符串转Boolean
@@ -637,8 +637,17 @@ const WAQI_INSTANT_CAST = {
 		? Settings.AQI.Comparison.Switch : JSON.parse(Settings.AQI.Comparison.Switch) // BoxJs字符串转Boolean
 	Settings.Map.AQI = JSON.parse(Settings.Map.AQI) // BoxJs字符串转Boolean
 	$.log(`🎉 ${$.name}, Set Environment Variables`, `Settings: ${typeof Settings}`, `Settings内容: ${JSON.stringify(Settings)}`, "");
-	return Settings
-	async function getENV(t,e,n){let i=$.getjson(t,n),r=i?.[e]||i?.Settings?.[e]||n[e];if("undefined"!=typeof $argument){if($argument){let t=Object.fromEntries($argument.split("&").map((t=>t.split("=")))),e={};for(var s in t)f(e,s,t[s]);Object.assign(r,e)}function f(t,e,n){e.split(".").reduce(((t,i,r)=>t[i]=e.split(".").length===++r?n:t[i]||{}),t)}}return r}
+	return { Settings, Caches }
+	// https://github.com/VirgilClyne/iRingo/blob/e40ce8e25ca9810f9fdc0f24351963c5aab383ee/js/Siri.response.beta.js
+	/**
+	 * Get Environment Variables
+	 * @author VirgilClyne
+	 * @param {String} t - Persistent Store Key
+	 * @param {String} e - Platform Name
+	 * @param {Object} n - Default DataBase
+	 * @return {Promise<*>}
+	 */
+	 async function getENV(t,e,n){let i=$.getjson(t,n),s=i?.[e]?.Settings||n[e].Settings,g=i?.[e]?.Config||n?.[e]?.Config,f=i?.[e]?.Caches||void 0;if("string"==typeof f&&(f=JSON.parse(f)),"undefined"!=typeof $argument){if($argument){let t=Object.fromEntries($argument.split("&").map((t=>t.split("=")))),e={};for(var r in t)o(e,r,t[r]);Object.assign(s,e)}function o(t,e,n){e.split(".").reduce(((t,i,s)=>t[i]=e.split(".").length===++s?n:t[i]||{}),t)}}return{Settings:s,Caches:f,Config:g}}
 };
 
 /**
