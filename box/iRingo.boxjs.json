@@ -203,6 +203,30 @@
 					"desc": "空气质量标准代码，会随系统更新而更新"
 				},
 				{
+					"id": "@iRingo.Weather.AQI.Comparison.Switch",
+					"name": "[空气质量]对比昨日开关",
+					"val": true,
+					"type": "boolean",
+					"desc": "对比昨日同时段的AQI数据"
+				},
+				{
+					"id": "@iRingo.Weather.AQI.Comparison.Mode",
+					"name": "[空气质量]工作模式",
+					"val": "Cache",
+					"type": "radios",
+					"items": [
+						{
+							"key": "Cache",
+							"label": "仅使用缓存"
+						},
+						{
+							"key": "api.caiyunapp.com",
+							"label": "彩云天气"
+						}
+					],
+					"desc": "彩云天气需申请token"
+				},
+				{
 					"id": "@iRingo.Weather.Map.AQI",
 					"name": "[空气质量地图]修改开关",
 					"val": false,

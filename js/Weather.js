@@ -5,7 +5,7 @@ README:https://github.com/VirgilClyne/iRingo
 const $ = new Env("Apple Weather v3.2.9");
 const URL = new URLs();
 const DataBase = {
-	"Weather":{"Switch":true,"NextHour":{"Switch":true,"Mode":"www.weatherol.cn","HTTPHeaders":{"Content-Type":"application/x-www-form-urlencoded","User-Agent":"Mozilla/5.0 (iPhone; CPU iPhone OS 15_1_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.1 Mobile/15E148 Safari/604.1"},"ColorfulClouds":{"Auth":null},},"AQI":{"Switch":true,"Mode":"WAQI Public","Location":"Station","Auth":null,"Scale":"EPA_NowCast.2204"},"Map":{"AQI":false}},
+	"Weather":{"Switch":true,"NextHour":{"Switch":true,"Mode":"www.weatherol.cn","HTTPHeaders":{"Content-Type":"application/x-www-form-urlencoded","User-Agent":"Mozilla/5.0 (iPhone; CPU iPhone OS 15_1_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.1 Mobile/15E148 Safari/604.1"},"ColorfulClouds":{"Auth":null},},"AQI":{"Switch":true,"Mode":"WAQI Public","Location":"Station","Auth":null,"Scale":"EPA_NowCast.2204","Comparison":{"Switch":true,"Mode":"Cache"}},"Map":{"AQI":false}},
 	"Siri":{"Switch":true,"CountryCode":"TW","Domains":["web","itunes","app_store","movies","restaurants","maps"],"Functions":["flightutilities","lookup","mail","messages","news","safari","siri","spotlight","visualintelligence"],"Safari_Smart_History":true},
 	"Pollutants":{"co":"CO","no":"NO","no2":"NO2","so2":"SO2","o3":"OZONE","nox":"NOX","pm25":"PM2.5","pm10":"PM10","other":"OTHER"}
 };
@@ -408,6 +408,77 @@ const WAQI_INSTANT_CAST = {
 						"metadata": { ...airQuality?.metadata, ...modifiedAirQuality.metadata },
 						"pollutants": { ...airQuality?.pollutants, ...modifiedAirQuality.pollutants },
 					};
+
+					if (
+						Settings.AQI?.Comparison?.Switch
+							&& data[AIR_QUALITY]?.previousDayComparison === AQI_COMPARISON.UNKNOWN
+					) {
+						// TODO: search cache
+						const metadata = data[AIR_QUALITY]?.metadata;
+						const nowHourTimestamp = (+ (new Date()).setMinutes(0, 0, 0));
+
+						let reportedTimestamp;
+						switch (Params.ver) {
+							case "v1":
+								reportedTimestamp = metadata["reported_time"]
+									? metadata["reported_time"] * 1000 : nowHourTimestamp;
+								break;
+							case "v2":
+							default:
+								reportedTimestamp = metadata["reportedTime"]
+									? (+ new Date(metadata["reportedTime"])) : nowHourTimestamp;
+								break;
+						}
+
+						// add 45 minutes for possible data delay
+						const yesterdayTimestamp = reportedTimestamp - 1000 * 60 * 60 * 24 + 1000 * 60 * 45;
+
+						if (Settings.AQI.Comparison?.Mode === "api.caiyunapp.com") {
+							const token = Settings.NextHour?.ColorfulClouds?.Auth;
+
+							if (token) {
+								const data = await colorfulClouds(
+									Settings.NextHour?.HTTPHeaders,
+									// TODO
+									"v2.6",
+									token,
+									{ latitude: Params.lat, longitude: Params.lng },
+									"weather",
+									// ms to s
+									{ "unit": "metric:v2", "hourlysteps": 1, "begin": yesterdayTimestamp / 1000 },
+								);
+
+								if (
+									data?.result?.realtime?.air_quality?.aqi?.usa
+										&& data?.result?.hourly?.air_quality?.aqi?.[0]?.value?.usa
+								) {
+									const currentAqi = parseInt(data.result.realtime.air_quality.aqi.usa);
+									const yesterdayAqi = parseInt(data.result.hourly.air_quality.aqi[0].value.usa);
+
+									if (!isNaN(currentAqi) && !isNaN(yesterdayAqi)) {
+										$.log(
+											`🚧 ${$.name}, 比较昨天AQI（彩云天气）：`,
+											`当前AQI：${currentAqi}`,
+											`${data.result.hourly.air_quality.aqi[0].datetime}时的AQI：${yesterdayAqi}`, ""
+										);
+
+										const currentAqiLevel =
+											toAqiLevel(EPA_454.AQI_RANGES, EPA_454.AQI_LEVELS, currentAqi);
+										const yesterdayAqiLevel =
+											toAqiLevel(EPA_454.AQI_RANGES, EPA_454.AQI_LEVELS, yesterdayAqi);
+
+										if (currentAqiLevel > yesterdayAqiLevel) {
+											data[AIR_QUALITY].previousDayComparison = AQI_COMPARISON.WORSE;
+										} else if (currentAqiLevel < yesterdayAqiLevel) {
+											data[AIR_QUALITY].previousDayComparison = AQI_COMPARISON.BETTER;
+										} else {
+											data[AIR_QUALITY].previousDayComparison = AQI_COMPARISON.SAME;
+										}
+									}
+								}
+							}
+						}
+					}
 					$.log(`🚧 ${$.name}, data[${AIR_QUALITY}] = ${JSON.stringify(data[AIR_QUALITY])}`, "");
 				} else $.log(`🎉 ${$.name}, 无须替换, 跳过`, "");
 			}
