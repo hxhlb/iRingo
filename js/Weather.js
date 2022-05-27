@@ -684,7 +684,7 @@ const AQI_STANDARDS = {
 
 				const standard = AQI_STANDARDS[yesterday?.standardName];
 
-				data[AIR_QUALITY]?.["previousDayComparison"] = compareAqi(
+				data[AIR_QUALITY]["previousDayComparison"] = compareAqi(
 					standard?.AQI_RANGES,
 					standard?.AQI_LEVELS,
 					today?.aqi,
