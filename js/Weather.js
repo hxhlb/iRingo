@@ -345,7 +345,7 @@ const WAQI_INSTANT_CAST = {
 };
 
 const AQI_STANDARDS = {
-	"WAQI_INSTANT_CAST": WAQI_INSTANT_CAST, "EPA_NowCast": EPA_454, "HJ6332012": HJ_633,
+	"WAQI_InstantCast": WAQI_INSTANT_CAST, "EPA_NowCast": EPA_454, "HJ6332012": HJ_633,
 };
 
 /***************** Processing *****************/
