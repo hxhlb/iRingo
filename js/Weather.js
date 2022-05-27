@@ -384,13 +384,13 @@ const AQI_STANDARDS = {
 		const MISSION_TYPES = { AQI: "aqi", COMPARE_AQI: "compareAqi", NEXT_HOUR: "nextHour" };
 		const missionList = { "www.weatherol.cn": [], "api.caiyunapp.com": [], "WAQI": [] };
 
-		const scaleName = data?.[AIR_QUALITY]?.[SCALE];
-		$.log(`🚧 ${$.name}, AQI刻度标准：${scaleName}`, "");
-
 		let airQualityObject, aqiForComparison, nextHourObject;
 
 		// AQI
 		if (Settings.AQI.Switch) {
+			const scaleName = data?.[AIR_QUALITY]?.[SCALE];
+			$.log(`🚧 ${$.name}, AQI刻度标准：${scaleName}`, "");
+
 			// check the requirements of Apple weather
 			if (requiredData?.includes(AIR_QUALITY)) {
 				// use API when no AQI data or local converter is disabled
