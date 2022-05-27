@@ -2137,13 +2137,13 @@ function getCachedAqi(cachedAqis, reportedTimestamp, location, stationName) {
 		}
 	}
 
-	$.log(`⚠ ${$.name}, 无法找到缓存。`, "");
+	$.log(`⚠ ${$.name}, 无法找到缓存`, "");
 }
 
 function cacheAqi(caches, timestamp, location, stationName, standardName, aqi, primaryPollutant) {
 	if (timestamp && aqi >= 0) {
 		$.log(
-			`🚧 ${$.name}, ${cacheAqi.name}：new Date(timestamp) = ${new Date(timestamp)}, aqi = ${aqi}`, "",
+			`🚧 ${$.name}, ${cacheAqi.name}：时间 = ${new Date(timestamp)}, aqi = ${aqi}`, "",
 		);
 
 		const aqis = caches?.aqis ?? {};
