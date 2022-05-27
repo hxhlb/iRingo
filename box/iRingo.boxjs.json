@@ -154,21 +154,21 @@
 			"settings": [
 				{
 					"id": "@iRingo.Weather.Settings.Switch",
-					"name": "总功能开关",
+					"name": "模块开关",
 					"val": true,
 					"type": "boolean",
-					"desc": "是否启用此APP修改"
+					"desc": ""
 				},
 				{
 					"id": "@iRingo.Weather.Settings.NextHour.Switch",
-					"name": "[下一小时降水]修改开关",
+					"name": "下一小时降水强度",
 					"val": true,
 					"type": "boolean",
-					"desc": "是否启用此功能修改，数据来源：气象在线"
+					"desc": ""
 				},
 				{
-					"id": "@iRingo.Weather.Settings.NextHour.Mode",
-					"name": "[下一小时降水]切换API",
+					"id": "@iRingo.Weather.Settings.NextHour.Source",
+					"name": "「下一小时降水强度」数据源",
 					"val": "www.weatherol.cn",
 					"type": "radios",
 					"items": [
@@ -181,100 +181,98 @@
 							"label": "彩云天气"
 						}
 					],
-					"desc": "气象在线使用的是彩云天气的数据，优点是无需付费，缺点是仅支持简体中文。彩云天气需要付费才能获取获取分钟级降水数据。"
-				},
-				{
-					"id": "@iRingo.Weather.Settings.NextHour.HTTPHeaders",
-					"name": "[下一小时降水]HTTP请求头",
-					"val": "{ \"Content-Type\": \"application/x-www-form-urlencoded\", \"User-Agent\": \"Mozilla/5.0 (iPhone; CPU iPhone OS 15_1_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.1 Mobile/15E148 Safari/604.1\" }",
-					"type": "text",
-					"placeholder": "{ \"User-Agent\": \"Mozilla/5.0 (iPhone; CPU iPhone OS 15_1_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.1 Mobile/15E148 Safari/604.1\" }",
-					"desc": "请求API时使用的HTTP请求头"
-				},
-				{
-					"id": "@iRingo.Weather.Settings.NextHour.ColorfulClouds.Auth",
-					"name": "[下一小时降水]彩云天气令牌",
-					"val": "",
-					"type": "text",
-					"placeholder": "ABcdef1g2hiJklmN",
-					"desc": "彩云天气API令牌"
+					"desc": "气象在线的数据与彩云天气相同，且无需付费，但仅支持简体中文。彩云天气需要申请token且只有收费套餐才能获取分钟级降水数据。"
 				},
 				{
 					"id": "@iRingo.Weather.Settings.AQI.Switch",
-					"name": "[空气质量]修改开关",
+					"name": "空气质量",
 					"val": true,
 					"type": "boolean",
-					"desc": "是否启用此功能修改，数据来源：WAQI"
+					"desc": ""
 				},
 				{
-					"id": "@iRingo.Weather.Settings.AQI.Mode",
-					"name": "[空气质量]工作模式",
-					"val": "WAQI Public",
+					"id": "@iRingo.Weather.Settings.AQI.Targets",
+					"name": "「空气质量」转换目标",
+					"val": [
+						"HJ6332012"
+					],
+					"type": "checkboxes",
+					"desc": "设置需要转换的空气质量标准。",
+					"items": [
+						{
+							"key": "HJ6332012",
+							"label": "中国（HJ 633——2012）"
+						},
+						{
+							"key": "EPA_NowCast",
+							"label": "美国（EPA 454/B-18-007、NowCast混合）"
+						}
+					]
+				},
+				{
+					"id": "@iRingo.Weather.Settings.AQI.Local.Switch",
+					"name": "本地转换「空气质量」",
+					"val": true,
+					"type": "boolean",
+					"desc": "开启后，会将转换目标中的AQI按照转换规则进行转换。"
+				},
+				{
+					"id": "@iRingo.Weather.Settings.AQI.Local.Standard",
+					"name": "「空气质量」本地转换规则",
+					"val": "WAQI_InstantCast",
+					"type": "selects",
+					"desc": "设置空气质量本地转换规则。",
+					"items": [
+						{
+							"key": "WAQI_InstantCast",
+							"label": "WAQI InstantCast"
+						}
+					]
+				},
+				{
+					"id": "@iRingo.Weather.Settings.AQI.Source",
+					"name": "「空气质量」数据源",
+					"val": "www.weatherol.cn",
 					"type": "radios",
 					"items": [
 						{
 							"key": "Local",
-							"label": "本地转换"
+							"label": "只使用苹果数据"
+						},
+						{
+							"key": "www.weatherol.cn",
+							"label": "气象在线"
+						},
+						{
+							"key": "api.caiyunapp.com",
+							"label": "彩云天气"
 						},
 						{
 							"key": "WAQI Public",
-							"label": "waqi.info 公共API"
+							"label": "WAQI公共API"
 						},
 						{
 							"key": "WAQI Private",
-							"label": "waqi.info 私有API"
+							"label": "WAQI私有API"
 						}
 					],
-					"desc": "没有申请自己Token的只能使用\"公共API\""
-				},
-				{
-					"id": "@iRingo.Weather.Settings.AQI.Location",
-					"name": "[空气质量]定位精度",
-					"val": "Station",
-					"type": "radios",
-					"items": [
-						{
-							"key": "City",
-							"label": "城市"
-						},
-						{
-							"key": "Station",
-							"label": "观测站"
-						}
-					],
-					"desc": "获取天气数据的精确度，\"观测站\"会获取距离你最近的观测站数据，\"城市\"只会获取所在地城市指定观测站的数据"
-				},
-				{
-					"id": "@iRingo.Weather.Settings.AQI.Auth",
-					"name": "[空气质量]WAQI令牌",
-					"val": "",
-					"type": "text",
-					"placeholder": "1234567893feefc5f0q5000bfo0c38d90bbeb",
-					"desc": "私有API令牌"
-				},
-				{
-					"id": "@iRingo.Weather.Settings.AQI.Scale",
-					"name": "[空气质量]测量标准代码",
-					"val": "EPA_NowCast.2204",
-					"type": "text",
-					"placeholder": "EPA_NowCast.2204",
-					"desc": "空气质量标准代码，会随系统更新而更新"
+					"desc": "在苹果没有AQI数据时通过其他API获取数据。如果没有申请过token，就只能使用WAQI公共API。"
 				},
 				{
 					"id": "@iRingo.Weather.Settings.AQI.Comparison.Switch",
-					"name": "[空气质量]对比昨日开关",
+					"name": "「空气质量」对比昨日",
 					"val": true,
 					"type": "boolean",
-					"desc": "对比昨日同时段的AQI数据，仅支持iOS 15以上系统"
+					"desc": "对比昨日同时段的AQI数据，仅支持iOS 15以上系统。"
 				},
 				{
-					"id": "@iRingo.Weather.Settings.AQI.Comparison.Mode",
-					"name": "[空气质量]工作模式",
-					"val": "Cache",
+					"id": "@iRingo.Weather.Settings.AQI.Comparison.Source",
+					"name": "「空气质量」对比昨日数据源",
+					"val": "Cache Only",
 					"type": "radios",
 					"items": [
 						{
-							"key": "Cache",
+							"key": "Cache Only",
 							"label": "仅使用缓存"
 						},
 						{
@@ -282,14 +280,55 @@
 							"label": "彩云天气"
 						}
 					],
-					"desc": "彩云天气需申请token"
+					"desc": "彩云天气需申请token，且换算方式与本模块有差异。"
 				},
 				{
 					"id": "@iRingo.Weather.Settings.Map.AQI",
-					"name": "[空气质量地图]修改开关",
+					"name": "空气质量地图",
 					"val": false,
 					"type": "boolean",
-					"desc": "是否启用此功能修改，数据来源：WAQI"
+					"desc": "（此功能仍在开发中）数据源：WAQI。"
+				},
+				{
+					"id": "@iRingo.Weather.Settings.HTTPHeaders",
+					"name": "HTTP Hearders",
+					"val": "{ \"Content-Type\": \"application/x-www-form-urlencoded\", \"User-Agent\": \"Mozilla/5.0 (iPhone; CPU iPhone OS 15_1_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.1 Mobile/15E148 Safari/604.1\" }",
+					"type": "text",
+					"placeholder": "{ \"User-Agent\": \"Mozilla/5.0 (iPhone; CPU iPhone OS 15_1_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.1 Mobile/15E148 Safari/604.1\" }",
+					"desc": "请求API时使用的HTTP请求头。"
+				},
+				{
+					"id": "@iRingo.Weather.Settings.ColorfulClouds.Token",
+					"name": "彩云天气token",
+					"val": "",
+					"type": "text",
+					"placeholder": "ABcdef1g2hiJklmN",
+					"desc": "彩云天气API令牌。"
+				},
+				{
+					"id": "@iRingo.Weather.Settings.WAQI.Token",
+					"name": "WAQI token",
+					"val": "",
+					"type": "text",
+					"placeholder": "1234567893feefc5f0q5000bfo0c38d90bbeb",
+					"desc": "WAQI API令牌。"
+				},
+				{
+					"id": "@iRingo.Weather.Settings.WAQI.Mode",
+					"name": "WAQI数据获取方式",
+					"val": "Coordinate",
+					"type": "radios",
+					"items": [
+						{
+							"key": "Coordinate",
+							"label": "直接使用坐标获取"
+						},
+						{
+							"key": "Station",
+							"label": "先搜索最近监测站再获取"
+						}
+					],
+					"desc": "（仅私有API模式有效）在部分地方直接使用坐标获取的AQI并非最近监测站的AQI，先搜索最近的监测站可以尽量获取到距离最近的数据。"
 				}
 			],
 			"author": "@VirgilClyne",

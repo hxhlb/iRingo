@@ -344,281 +344,369 @@ const WAQI_INSTANT_CAST = {
 	},
 };
 
+const AQI_STANDARDS = {
+	"WAQI_INSTANT_CAST": WAQI_INSTANT_CAST, "EPA_NowCast": EPA_454, "HJ6332012": HJ_633,
+};
+
 /***************** Processing *****************/
 !(async () => {
 	const { Settings, Caches, Configs } = await setENV("iRingo", "Weather", DataBase);
 	if (Settings.Switch) {
-		let url = URL.parse($request.url);
-		const Params = await getParams(url.path);
-		let data = JSON.parse($response.body);
-		const Status = await getStatus(data);
+		$.log(`🚧 ${$.name}, 模块已启用`, "");
+		const url = URL.parse($request.url);
+		const data = JSON.parse($response.body);
+		const params = await getParams(url.path);
+		const apiVersion = params.ver;
+		const coordinate = { latitude: params.lat, longitude: params.lng };
+		let requiredData, AIR_QUALITY, SCALE, NEXT_HOUR, PROVIDER;
+		switch (apiVersion) {
+			case "v1":
+				requiredData = url.params?.include;
+				AIR_QUALITY = "air_quality";
+				SCALE = "airQualityScale";
+				NEXT_HOUR = "next_hour";
+				PROVIDER = "provider_name";
+				break;
+			case "v2":
+				requiredData = url.params?.dataSets;
+				AIR_QUALITY = "airQuality";
+				SCALE = "scale";
+				NEXT_HOUR = "forecastNextHour";
+				PROVIDER = "providerName";
+				break;
+			default:
+				$.logErr(`❗️ ${$.name}, 不支持此版本的苹果天气。 API version = ${apiVersion}`);
+		}
+
+		const MISSION_TYPES = { AQI: "aqi", COMPARE_AQI: "compareAqi", NEXT_HOUR: "nextHour" };
+		const missionList = {
+			"www.weatherol.cn": [],
+			"api.caiyunapp.com": [],
+			"WAQI": [],
+		};
+
+		const scaleName = data?.[AIR_QUALITY]?.[SCALE];
+		$.log(`🚧 ${$.name}, AQI刻度标准：${scaleName}`, "");
+
+		let airQualityObject, aqiForComparison, nextHourObject;
+
 		// AQI
 		if (Settings.AQI.Switch) {
-			if (url.params?.include?.includes("air_quality") || url.params?.dataSets?.includes("airQuality")) {
-				if (Status == true) {
-					$.log(`🎉 ${$.name}, 需要替换AQI`, "");
-					let AIR_QUALITY;
-					switch (Params.ver) {
-						case "v1":
-							AIR_QUALITY = "air_quality";
-							break;
-						case "v2":
-						default:
-							AIR_QUALITY = "airQuality";
-							break;
+			// check the requirements of Apple weather
+			if (requiredData?.includes(AIR_QUALITY)) {
+				// use API when no AQI data or local converter is disabled
+				if (
+					!scaleName || (!Settings.AQI.Local.Switch
+						&& Settings.AQI.Targets.includes(data?.[AIR_QUALITY]?.["scale"]
+							?.slice(0, data[AIR_QUALITY]["scale"]?.lastIndexOf('.'))
+						)
+					)
+				) {
+					if (Settings.AQI.Source !== "Local") {
+						missionList[Settings.AQI.Source].push(MISSION_TYPES.AQI);
+						// TODO: disable cache searching if any API support previousDayComparison
 					}
-					const airQuality = data[AIR_QUALITY];
-					let modifiedAirQuality = { "metadata": {}, "pollutants": {} };
+				}
 
-					if (Settings.AQI.Mode === "Local") {
-						$.log(`🚧 ${$.name}, 工作模式：本地转换`, "");
-
-						if (airQuality) {
-							modifiedAirQuality = await outputAqi(
-								// TODO
-								Params.ver, appleAqiConverter(WAQI_INSTANT_CAST, airQuality),
-							);
-						}
-					} else if (Settings.AQI.Mode == "WAQI Public") {
-						$.log(`🚧 ${$.name}, 工作模式: waqi.info 公共API`, "")
-						var { Station, idx } = await WAQI("Nearest", { api: "v1", lat: Params.lat, lng: Params.lng });
-						const Token = await WAQI("Token", { idx: idx });
-						//var NOW = await WAQI("NOW", { token:Token, idx: idx });
-						const feedData = await WAQI("AQI", { token: Token, idx: idx });
-						modifiedAirQuality = await outputAqi(
-							Params.ver, waqiToAqi(feedData),
-						);
-					} else if (Settings.AQI.Mode == "WAQI Private") {
-						$.log(`🚧 ${$.name}, 工作模式: waqi.info 私有API`, "")
-						const Token = Settings.AQI.Auth;
-						if (Settings.AQI.Location == "Station") {
-							$.log(`🚧 ${$.name}, 定位精度: 观测站`, "")
-							var { Station, idx } = await WAQI("Nearest", { api: "v1", lat: Params.lat, lng: Params.lng });
-							const feedData = await WAQI("StationFeed", { token: Token, idx: idx });
-							modifiedAirQuality = await outputAqi(
-								Params.ver, waqiToAqi(feedData),
-							);
-						} else if (Settings.AQI.Location == "City") {
-							$.log(`🚧 ${$.name}, 定位精度: 城市`, "")
-							const feedData = await WAQI("CityFeed", { token: Token, lat: Params.lat, lng: Params.lng });
-							modifiedAirQuality = await outputAqi(
-								Params.ver, waqiToAqi(feedData),
-							);
-						}
-					};
-
-					data[AIR_QUALITY] = {
-						...airQuality,
-						...modifiedAirQuality,
-						"metadata": { ...airQuality?.metadata, ...modifiedAirQuality.metadata },
-						"pollutants": { ...airQuality?.pollutants, ...modifiedAirQuality.pollutants },
-					};
-
-					const aqi = data[AIR_QUALITY]?.index;
-					if (
-						// APIv1 doesn't support previousDayComparison
-						Settings.AQI?.Comparison?.Switch && typeof aqi === "number" && aqi >= 0
-							&& data[AIR_QUALITY]?.previousDayComparison === AQI_COMPARISON.UNKNOWN
-					) {
-						const metadata = data[AIR_QUALITY]?.metadata;
-						const nowHourTimestamp = (+ (new Date()).setMinutes(0, 0, 0));
-
-						let reportedTimestamp;
-						switch (Params.ver) {
-							case "v1":
-								reportedTimestamp = metadata["reported_time"]
-									? metadata["reported_time"] * 1000 : nowHourTimestamp;
-								break;
-							case "v2":
-							default:
-								reportedTimestamp = metadata["reportedTime"]
-									? (+ new Date(metadata["reportedTime"])) : nowHourTimestamp;
-								break;
-						}
-
-						cacheAqi(
-							Caches,
-							reportedTimestamp,
-							{ longitude: metadata.longitude, latitude: metadata.latitude },
-							data[AIR_QUALITY].source,
-							aqi,
-						);
-
-						const yesterdayTimestamp = reportedTimestamp - 1000 * 60 * 60 * 24;
-
-						if (Caches?.aqis) {
-							const key = Object.keys(Caches.aqis).find(timestamp =>
-								// for possible data delay
-								yesterdayTimestamp - 1000 * 60 * 15 < timestamp < yesterdayTimestamp  + 1000 * 60 * 45
+				if (Settings.AQI.Comparison.Switch) {
+					if (apiVersion === "v1") {
+						$.log(`⚠ ${$.name}, 当前版本（API version = ${apiVersion}）的苹果天气不支持对比昨日AQI`, "");
+					} else {
+						const previousDayComparison = data?.[AIR_QUALITY]?.["previousDayComparison"];
+						// try to replace no data and unknown `previousDayComparison`
+						if (!previousDayComparison || previousDayComparison === AQI_COMPARISON.UNKNOWN) {
+							const reportedTime = data?.[AIR_QUALITY]?.["metadata"]?.["reportedTime"];
+							const reportedTimestamp = reportedTime
+								? (+ new Date(reportedTime)) : (new Date()).setMinutes(0, 0, 0);
+							const cache = getCachedAqi(
+								Caches?.aqis, reportedTimestamp, coordinate, data?.[AIR_QUALITY]?.["source"],
 							);
 
-							const cache = Caches.aqis[key]?.find(value =>
-								// cannot get station name
-								["和风天气", "QWeather", "BreezoMeter"].includes(data[AIR_QUALITY]?.source)
-									// https://www.mee.gov.cn/gkml/hbb/bwj/201204/W020140904493567314967.pdf
-									? Math.abs(value?.location?.longitude - metadata.longitude) < 0.045
-											&& Math.abs(value?.location?.latitude - metadata.latitude) < 0.045
-									: value.stationName === data[AIR_QUALITY]?.source
-							);
-
-							// TODO
-							data[AIR_QUALITY].previousDayComparison = compareAqi(
-								EPA_454.AQI_RANGES, EPA_454.AQI_LEVELS, data[AIR_QUALITY].index, cache?.aqi,
-							);
-						}
-
-						// no cache data
-						if (data[AIR_QUALITY].previousDayComparison === AQI_COMPARISON.UNKNOWN) {
-							switch (Settings.AQI?.Comparison?.Mode) {
-								case "api.caiyunapp.com":
-									const token = Settings.NextHour?.ColorfulClouds?.Auth;
-	
-									if (token) {
-										const aqiData = await colorfulClouds(
-											Settings.NextHour?.HTTPHeaders,
-											// TODO
-											"v2.6",
-											token,
-											{ latitude: Params.lat, longitude: Params.lng },
-											"weather",
-											// add 45 minutes for possible data delay
-											// ms to s
-											{
-												"unit": "metric:v2",
-												"hourlysteps": 1,
-												"begin": (yesterdayTimestamp + 1000 * 60 * 45) / 1000,
-											},
-										);
-	
-										if (
-											aqiData?.result?.realtime?.air_quality?.aqi?.usa
-												&& aqiData?.result?.hourly?.air_quality?.aqi?.[0]?.value?.usa
-										) {
-											const currentAqi = parseInt(aqiData.result.realtime.air_quality.aqi.usa);
-											const yesterdayAqi =
-												parseInt(aqiData.result.hourly.air_quality.aqi[0].value.usa);
-	
-											if (!isNaN(currentAqi) && !isNaN(yesterdayAqi)) {
-												$.log(
-													`🚧 ${$.name}, 比较昨天AQI（彩云天气）：`,
-													`当前AQI：${currentAqi}`,
-													`${aqiData.result.hourly.air_quality.aqi[0].datetime}时的AQI：${yesterdayAqi}`,
-													"",
-												);
-
-												// TODO
-												data[AIR_QUALITY].previousDayComparison = compareAqi(
-													EPA_454.AQI_RANGES, EPA_454.AQI_LEVELS, currentAqi, yesterdayAqi,
-												);
-												break;
-											}
-										}
-									}
-								default:
-									break;
+							if (cache) {
+								aqiForComparison = {
+									yesterday: {
+										standardName: cache.standardName,
+										aqi: cache.aqi,
+										primaryPollutant: cache.primaryPollutant,
+									},
+								};
+							} else {
+								missionList[Settings.AQI.Comparison.Source].push(MISSION_TYPES.COMPARE_AQI);
 							}
 						}
 					}
-					$.log(`🚧 ${$.name}, data[${AIR_QUALITY}] = ${JSON.stringify(data[AIR_QUALITY])}`, "");
-				} else $.log(`🎉 ${$.name}, 无须替换, 跳过`, "");
+				}
 			}
 		};
 		// NextHour
 		if (Settings.NextHour.Switch) {
-			if (
-				url.params?.dataSets?.includes("forecastNextHour") ||
-				url.params?.include?.includes("next_hour_forecast")
-			) {
-				$.log(
-					`🚧 ${$.name}, 下小时降水强度, ` +
-					`providerName = ${
-						data?.forecastNextHour?.providerName ?? data?.next_hour?.provider_name
-					}`, ""
-				);
+			if (requiredData?.includes(NEXT_HOUR)) {
+				const providerName = data?.[NEXT_HOUR]?.[PROVIDER];
+				$.log(`🚧 ${$.name}, 下小时降水提供商：${providerName}`, "");
 
-				if (!(data?.forecastNextHour?.metadata?.providerName || data?.next_hour?.provider_name)) {
-					const NEXT_HOUR = (Params.ver === "v1") ? "next_hour" : "forecastNextHour";
-					if (Settings.NextHour?.Mode === "api.caiyunapp.com") {
-						const CC_API_VERSION = "v2.6";
-						const token = Settings.NextHour?.ColorfulClouds?.Auth;
-						const languageWithReigon = Params.language;
-
-						if (token) {
-							// No official name for Japanese
-							let providerName = "ColorfulClouds";
-							if (languageWithReigon.includes("zh-Hans")) {
-								providerName = "彩云天气";
-							} else if (languageWithReigon.includes("zh-Hant")) {
-								providerName = "彩雲天氣";
-							}
-
-							const weatherData = await colorfulClouds(
-								Settings.NextHour?.HTTPHeaders,
-								CC_API_VERSION,
-								token,
-								{ latitude: Params.lat, longitude: Params.lng },
-								// get hourly.skycon data to detect the weather type
-								"weather",
-								// unit for calculate precipitations
-								// https://docs.caiyunapp.com/docs/tables/precip
-								{ "unit": "metric:v2", "lang": toColorfulCloudsLang(languageWithReigon) },
-							);
-
-							// no data for current location, skip
-							if (
-								weatherData &&
-								weatherData?.result?.minutely?.datasource &&
-								weatherData.result.minutely.datasource !== "gfs"
-							) {
-								data[NEXT_HOUR] = await outputNextHour(
-									Params.ver,
-									colorfulCloudsToNextHour(
-										providerName,
-										weatherData.result?.hourly?.skycon,
-										weatherData,
-									),
-									null,
-								);
-							}
-						}
-					} else {
-						const providerName = "气象在线";
-						const weatherData = await weatherOl(
-              Settings.NextHour?.HTTPHeaders,
-              "forecast",
-              { latitude: Params.lat, longitude: Params.lng },
-            );
-
-						// no data for current location, skip
-						if (
-							weatherData &&
-							weatherData?.result?.minutely?.datasource &&
-							weatherData.result.minutely.datasource !== "gfs"
-						) {
-							data[NEXT_HOUR] = await outputNextHour(
-								Params.ver,
-								colorfulCloudsToNextHour(
-									providerName,
-									weatherData.result?.hourly?.skycon,
-									weatherData,
-								),
-								null,
-							);
-						}
-					}
-
-					if (!(
-						data?.forecastNextHour?.metadata?.providerName ||
-						data?.next_hour?.provider_name
-					)) {
-						$.log(`🚧 ${$.name}, 没有找到合适的API, 跳过`, "");
-					}
-				} else {
-					//$.log(`🚧 ${$.name}, data = ${JSON.stringify(data?.forecastNextHour ?? data?.next_hour)}`, "");
-					$.log(`🎉 ${$.name}, 已有下一小时降水强度信息, 跳过`, "");
+				if (!providerName) {
+					missionList[Settings.NextHour.Source].push(MISSION_TYPES.NEXT_HOUR);
 				}
 			}
 		};
+
+		$.log(`🚧 ${$.name}, 任务列表：${JSON.stringify(missionList)}`, "");
+		for (const [apiName, missions] of Object.entries(missionList)) {
+			if (missions.length > 0) {
+				switch (apiName) {
+					case "www.weatherol.cn": {
+						const TYPES = { REALTIME: "realtime", FORECAST: "forecast" };
+						const providerName = "气象在线";
+
+						if (missions.includes(MISSION_TYPES.AQI)) {
+							// TODO
+							const weatherData = await weatherOl(Settings.HTTPHeaders, TYPES.REALTIME, coordinate);
+						}
+
+						if (missions.includes(MISSION_TYPES.NEXT_HOUR)) {
+							const weatherData = await weatherOl(
+								Settings.HTTPHeaders, TYPES.FORECAST, coordinate,
+							);
+
+							if (weatherData?.result?.minutely?.datasource !== "gfs") {
+								nextHourObject = colorfulCloudsToNextHour(
+									providerName,
+									// TODO
+									weatherData.result?.hourly?.skycon,
+									weatherData,
+								);
+							} else {
+								$.log(`⚠ ${$.name}, ${providerName}不支持预报此地的分钟级降水情况`, "");
+							}
+						}
+						break;
+					}
+					case "api.caiyunapp.com": {
+						const token = Settings.ColorfulClouds.Token;
+
+						if (token) {
+							const PATHS = {
+								REALTIME: "realtime", MINUTELY: "minutely", HOURLY: "hourly",
+								DAILY: "DAILY", COMPLEX: "weather",
+							};
+							const language = toColorfulCloudsLang(params.language);
+							const parameters = { "unit": "metric:v2", "lang": language };
+
+							if (missions.includes(MISSION_TYPES.COMPARE_AQI)) {
+								// AQI is updated by hourly
+								parameters["begin"] = ((new Date()).setMinutes(0, 0, 0)
+									// minus a day
+									- 1000 * 60 * 60 * 24
+									// add 45 minutes for possible delay of station data
+									+ 1000 * 60 * 45)
+									// ColorfulClouds accept second as parameter
+									/ 1000;
+							}
+
+							let path, providerName;
+							if (missions.length > 1) {
+								path = PATHS.COMPLEX;
+							} else {
+								switch (missions[0]) {
+									case MISSION_TYPES.AQI: {
+										path = PATHS.REALTIME;
+										break;
+									}
+									case MISSION_TYPES.COMPARE_AQI:
+									// we need `hourly` data to know the weather type
+									case MISSION_TYPES.NEXT_HOUR:
+									default: {
+										path = PATHS.COMPLEX;
+										break;
+									}
+								}
+							}
+
+							// No official name for Japanese
+							switch (language) {
+								case "zh_CN": {
+									providerName = "彩云天气";
+									break;
+								}
+								case "zh_TW": {
+									providerName = "彩雲天氣";
+									break;
+								}
+								case "en_US":
+								default: {
+									providerName = "ColorfulClouds";
+									break;
+								}
+							}
+
+							const weatherData = await colorfulClouds(
+								Settings.HTTPHeaders, apiVersion, token, coordinate, path, parameters,
+							);
+
+							if (missions.includes(MISSION_TYPES.AQI)) {
+								// TODO
+							}
+
+							if (missions.includes(MISSION_TYPES.COMPARE_AQI)) {
+								// TODO
+								// aqiForComparison =
+							}
+
+							if (missions.includes(MISSION_TYPES.NEXT_HOUR)) {
+								if (weatherData?.result?.minutely?.datasource !== "gfs") {
+									nextHourObject = colorfulCloudsToNextHour(
+										providerName,
+										// TODO
+										weatherData.result?.hourly?.skycon,
+										weatherData,
+									);
+								} else {
+									$.log(`⚠ ${$.name}, ${providerName}不支持预报此地的分钟级降水情况`, "");
+								}
+							}
+						} else {
+							$.logErr(`❗️ ${$.name}, 未填写彩云天气的token`);
+						}
+						break;
+					}
+					case "WAQI": {
+						if (missions.includes(MISSION_TYPES.AQI)) {
+							const token = Settings.WAQI.Token;
+
+							if (Settings.AQI.Source === "WAQI Private" && token) {
+								$.log(`🚧 ${$.name}, 正在使用WAQI私有API`, "");
+
+								if (Settings.WAQI.Mode === "Station") {
+									$.log(`🚧 ${$.name}, WAQI数据获取方式：先搜索最近监测站再获取数据`, "");
+
+									const { idx } = await WAQI(
+										"Nearest",
+										{ api: "v1", lat: coordinate.latitude, lng: coordinate.longitude },
+									);
+									airQualityObject =
+										waqiToAqi(await WAQI("StationFeed", { token: token, idx: idx }));
+								} else {
+									$.log(`🚧 ${$.name}, WAQI数据获取方式：直接使用坐标获取数据`, "");
+									airQualityObject = waqiToAqi(await WAQI(
+										"CityFeed",
+										{ token: token, lat: coordinate.latitude, lng: coordinate.longitude },
+									));
+								}
+							} else {
+								$.log(`🚧 ${$.name}, 正在使用WAQI公共API`, "");
+
+								const { idx } = await WAQI(
+									"Nearest",
+									{ api: "v1", lat: coordinate.latitude, lng: coordinate.longitude },
+								);
+								const publicToken = await WAQI("Token", { idx: idx });
+								airQualityObject = waqiToAqi(await WAQI("AQI", { token: publicToken, idx: idx }));
+							}
+						}
+						break;
+					}
+					default:
+						break;
+				}
+			}
+		}
+
+		if (airQualityObject) {
+			const airQuality = await outputAqi(apiVersion, airQualityObject);
+
+			data[AIR_QUALITY] = {
+				...data?.[AIR_QUALITY],
+				...airQuality,
+				"metadata": { ...data?.[AIR_QUALITY]?.["metadata"], ...airQuality?.["metadata"] },
+				"pollutants": { ...data?.[AIR_QUALITY]?.["pollutants"], ...airQuality?.["pollutants"]},
+			};
+
+			$.log(`🎉 ${$.name}, AQI合并完成`, "");
+		}
+
+		if (
+			Settings.AQI.Local.Switch
+				&& Settings.AQI.Targets.includes(
+					data?.[AIR_QUALITY]?.["scale"]?.slice(0, data[AIR_QUALITY]["scale"]?.lastIndexOf('.'))
+				)
+		) {
+			$.log(`🚧 ${$.name}, 本地换算AQI`, "");
+
+			const airQuality = await outputAqi(
+				apiVersion,
+				// TODO
+				appleAqiConverter(AQI_STANDARDS[Settings.AQI.Local.Standard], data[AIR_QUALITY])
+			);
+
+			data[AIR_QUALITY] = {
+				...data?.[AIR_QUALITY],
+				...airQuality,
+				"metadata": { ...data?.[AIR_QUALITY]?.["metadata"], ...airQuality?.["metadata"] },
+				"pollutants": { ...data?.[AIR_QUALITY]?.["pollutants"], ...airQuality?.["pollutants"]},
+			};
+
+			$.log(`🎉 ${$.name}, AQI合并完成`, "");
+		}
+
+		if (data?.[AIR_QUALITY] && aqiForComparison) {
+			const reportedTime = data[AIR_QUALITY]?.["metadata"]?.["reportedTime"];
+			const reportedTimestamp = reportedTime
+				? (+ new Date(reportedTime)) : (new Date()).setMinutes(0, 0, 0);
+			const standardName = data[AIR_QUALITY]?.["scale"]?.slice(
+				0, data[AIR_QUALITY]["scale"]?.lastIndexOf('.'),
+			);
+			const aqi = data[AIR_QUALITY]?.["index"];
+			const primaryPollutant = data[AIR_QUALITY]?.["primaryPollutant"];
+
+			cacheAqi(
+				Caches, reportedTimestamp, coordinate, data[AIR_QUALITY]?.source,
+				standardName, aqi, primaryPollutant,
+			);
+
+			if (!aqiForComparison?.today) {
+				const today = {};
+
+				today["standardName"] = standardName;
+				today["aqi"] = aqi;
+				today["primaryPollutant"] = primaryPollutant;
+
+				aqiForComparison["today"] = today;
+			}
+
+			const today = aqiForComparison.today;
+			const yesterday = aqiForComparison.yesterday;
+
+			if (yesterday?.standardName === today?.standardName) {
+				$.log(
+					`🚧 ${$.name}, 比较AQI：`,
+					`比较标准${yesterday?.standardName}。`
+					`昨天${yesterday?.aqi}，今天${today?.aqi}`, ""
+				);
+
+				const standard = AQI_STANDARDS[yesterday?.standardName];
+
+				data[AIR_QUALITY]?.["previousDayComparison"] = compareAqi(
+					standard?.AQI_RANGES,
+					standard?.AQI_LEVELS,
+					today?.aqi,
+					yesterday?.aqi
+				);
+			} else {
+				// TODO
+			}
+		}
+
+		if (nextHourObject) {
+			const nextHour = outputNextHour(apiVersion, nextHourObject, null);
+			data[NEXT_HOUR] = {
+				...data?.[NEXT_HOUR],
+				...nextHour,
+				"metadata": { ...data?.[NEXT_HOUR]?.["metadata"], ...nextHour?.["metadata"] },
+			};
+
+			$.log(`🎉 ${$.name}, 下一小时降水强度合并完成`, "");
+		}
+
 		$response.body = JSON.stringify(data);
 	}
 })()
@@ -2021,32 +2109,62 @@ async function outputNextHour(apiVersion, nextHourObject, debugOptions) {
 };
 
 /***************** Fuctions *****************/
-function cacheAqi(caches, timestamp, location, stationName, aqi) {
-	$.log(
-		`🚧 ${$.name}, ${cacheAqi.name}：new Date(timestamp) = ${new Date(timestamp)}, aqi = ${aqi}`, "",
-	);
+function getCachedAqi(cachedAqis, reportedTimestamp, location, stationName) {
+	if (cachedAqis) {
+		const yesterdayTimestamp = reportedTimestamp - 1000 * 60 * 60 * 24;
 
-	const aqis = caches?.aqis ?? {};
-	const aqiCache = Array.isArray(aqis?.[timestamp]) ? aqis[timestamp] : [];
+		const key = Object.keys(cachedAqis).find(timestamp =>
+			// for possible data delay
+			yesterdayTimestamp - 1000 * 60 * 15 < timestamp < yesterdayTimestamp + 1000 * 60 * 45
+		);
 
-	let finder;
-	if (["和风天气", "QWeather", "BreezoMeter"].includes(stationName)) {
-		finder = cache =>
-			cache.location.longitude === location.longitude
-				&& cache.location.latitude === location.latitude;
-	} else {
-		finder = cache => cache.stationName === stationName;
+		const cache = cachedAqis[key]?.find(value =>
+			// cannot get station name
+			!stationName || ["和风天气", "QWeather", "BreezoMeter"].includes(data[AIR_QUALITY]?.source)
+				// https://www.mee.gov.cn/gkml/hbb/bwj/201204/W020140904493567314967.pdf
+				? Math.abs(value?.location?.longitude - location.longitude) < 0.045
+						&& Math.abs(value?.location?.latitude - location.latitude) < 0.045
+				: value.stationName === stationName
+		);
+
+		if (cache?.aqi) {
+			return cache;
+		}
 	}
+};
 
-	!aqiCache.find(finder) && aqiCache.push({ location, stationName, aqi });
+function cacheAqi(caches, timestamp, location, stationName, standardName, aqi, primaryPollutant) {
+	if (timestamp && aqi >= 0) {
+		$.log(
+			`🚧 ${$.name}, ${cacheAqi.name}：new Date(timestamp) = ${new Date(timestamp)}, aqi = ${aqi}`, "",
+		);
 
-	// delete the cache before two day ago
-	const cacheLimit = (+ new Date()) - 1000 * 60 * 60 * 48;
-	Object.keys(aqis).forEach(key => key < cacheLimit && delete aqis[key]);
+		const aqis = caches?.aqis ?? {};
+		const aqiCache = Array.isArray(aqis?.[timestamp]) ? aqis[timestamp] : [];
 
-	aqis[timestamp] = aqiCache;
+		let finder;
+		// cannot get station name
+		if (!stationName || ["和风天气", "QWeather", "BreezoMeter"].includes(stationName)) {
+			finder = cache =>
+				cache.location.longitude === location.longitude
+					&& cache.location.latitude === location.latitude;
+		} else {
+			finder = cache => cache.stationName === stationName;
+		}
 
-	$.setjson({ ...caches, "aqis": aqis }, "@iRingo.Weather.Caches");
+		!aqiCache.find(finder)
+			&& aqiCache.push({ location, stationName, standardName, aqi, primaryPollutant });
+
+		// delete the cache before two day ago
+		const cacheLimit = (+ new Date()) - 1000 * 60 * 60 * 48;
+		Object.keys(aqis).forEach(key => key < cacheLimit && delete aqis[key]);
+
+		aqis[timestamp] = aqiCache;
+
+		$.setjson({ ...caches, "aqis": aqis }, "@iRingo.Weather.Caches");
+	} else {
+		throw new Error(`invalid parameters: timestamp = ${timestamp}, aqi = ${aqi}`);
+	}
 };
 
 /**
