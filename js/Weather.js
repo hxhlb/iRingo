@@ -9,7 +9,7 @@ const DataBase = {
 		"Settings":{"Switch":true,"CountryCode":"US","Config":{"GEOAddressCorrection":true,"LookupMaxParametersCount":true,"LocalitiesAndLandmarks":true,"PedestrianAR":true,"6694982d2b14e95815e44e970235e230":true,"OpticalHeading":true,"UseCLPedestrianMapMatchedLocations":true}}
 	},
 	"Weather":{
-		"Settings":{"Switch":true,"NextHour":{"Switch":true,"Mode":"www.weatherol.cn","HTTPHeaders":{"Content-Type":"application/x-www-form-urlencoded","User-Agent":"Mozilla/5.0 (iPhone; CPU iPhone OS 15_1_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.1 Mobile/15E148 Safari/604.1"},"ColorfulClouds":{"Auth":null},},"AQI":{"Switch":true,"Mode":"WAQI Public","Location":"Station","Auth":null,"Scale":"EPA_NowCast.2204","Comparison":{"Switch":true,"Mode":"Cache"}},"Map":{"AQI":false}},
+		"Settings":{"Switch":true,"NextHour":{"Switch":true,"Source":"www.weatherol.cn",},"AQI":{"Switch":true,"Targets":["HJ6332012"],"Local":{"Switch":true,"Standard":"WAQI_InstantCast"},"Source":"WAQI Public","Comparison":{"Switch":true,"Source":"Local"}},"Map":{"AQI":false},"HTTPHeaders":{"Content-Type":"application/x-www-form-urlencoded","User-Agent":"Mozilla/5.0 (iPhone; CPU iPhone OS 15_1_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.1 Mobile/15E148 Safari/604.1"},"ColorfulClouds":{"Token":null},"WAQI":{"Token":null,"Mode":"Coordinate"}},
 		"Configs":{"Pollutants":{"co":"CO","no":"NO","no2":"NO2","so2":"SO2","o3":"OZONE","nox":"NOX","pm25":"PM2.5","pm10":"PM10","other":"OTHER"}}
 	},
 	"Siri":{
@@ -431,7 +431,9 @@ const AQI_STANDARDS = {
 									},
 								};
 							} else {
-								missionList[Settings.AQI.Comparison.Source].push(MISSION_TYPES.COMPARE_AQI);
+								if (Settings.AQI.Comparison.Source !== "Local") {
+									missionList[Settings.AQI.Comparison.Source].push(MISSION_TYPES.COMPARE_AQI);
+								}
 							}
 						}
 					}
@@ -739,12 +741,17 @@ async function getENV(t,e,n){let i=$.getjson(t,n),s=i?.[e]?.Settings||n?.[e]?.Se
 	$.log(`⚠ ${$.name}, Set Environment Variables`, "");
 	const { Settings, Caches = {}, Configs} = await getENV(name, platform, database);
 	/***************** Prase *****************/
-	Settings.Switch = JSON.parse(Settings.Switch) // BoxJs字符串转Boolean
-	Settings.NextHour.Switch = JSON.parse(Settings.NextHour.Switch) // BoxJs字符串转Boolean
-	Settings.NextHour.HTTPHeaders = JSON.parse(Settings.NextHour.HTTPHeaders) // BoxJs字符串转Object
-	Settings.AQI.Switch = JSON.parse(Settings.AQI.Switch) // BoxJs字符串转Boolean
-	Settings.AQI.Comparison.Switch = JSON.parse(Settings.AQI.Comparison.Switch) // BoxJs字符串转Boolean
-	Settings.Map.AQI = JSON.parse(Settings.Map.AQI) // BoxJs字符串转Boolean
+	Settings.Switch = JSON.parse(Settings.Switch); // BoxJs字符串转Boolean
+	Settings.NextHour.Switch = JSON.parse(Settings.NextHour.Switch); // BoxJs字符串转Boolean
+	Settings.AQI.Switch = JSON.parse(Settings.AQI.Switch); // BoxJs字符串转Boolean
+	if (typeof Settings.AQI.Targets === "string") {
+		// BoxJs字符串转数组
+		Settings.AQI.Targets = Settings.AQI.Targets.split(",");
+	}
+	Settings.AQI.Local.Switch = JSON.parse(Settings.AQI.Local.Switch);
+	Settings.AQI.Comparison.Switch = JSON.parse(Settings.AQI.Comparison.Switch); // BoxJs字符串转Boolean
+	Settings.Map.AQI = JSON.parse(Settings.Map.AQI); // BoxJs字符串转Boolean
+	Settings.HTTPHeaders = JSON.parse(Settings.HTTPHeaders); // BoxJs字符串转Object
 	$.log(`🎉 ${$.name}, Set Environment Variables`, `Settings: ${typeof Settings}`, `Settings内容: ${JSON.stringify(Settings)}`, "");
 	return { Settings, Caches, Configs }
 };

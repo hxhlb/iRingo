@@ -268,11 +268,11 @@
 				{
 					"id": "@iRingo.Weather.Settings.AQI.Comparison.Source",
 					"name": "「空气质量」对比昨日数据源",
-					"val": "Cache Only",
+					"val": "Local",
 					"type": "radios",
 					"items": [
 						{
-							"key": "Cache Only",
+							"key": "Local",
 							"label": "仅使用缓存"
 						},
 						{
