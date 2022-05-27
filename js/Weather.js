@@ -2124,18 +2124,21 @@ function getCachedAqi(cachedAqis, reportedTimestamp, location, stationName) {
 
 		const cache = cachedAqis[key]?.find(value =>
 			// cannot get station name
-			!stationName || ["和风天气", "QWeather", "BreezoMeter"].includes(data[AIR_QUALITY]?.source)
+			!stationName || ["和风天气", "QWeather", "BreezoMeter"].includes(stationName)
 				// https://www.mee.gov.cn/gkml/hbb/bwj/201204/W020140904493567314967.pdf
 				? Math.abs(value?.location?.longitude - location.longitude) < 0.045
 						&& Math.abs(value?.location?.latitude - location.latitude) < 0.045
 				: value.stationName === stationName
 		);
 
-		if (cache?.aqi) {
+		if (cache) {
+			$.log(`🚧 ${$.name}, 获取到缓存AQI。缓存时间为${new Date(cache.timestamp)}，AQI = ${cache.aqi}`, "");
 			return cache;
 		}
 	}
-};
+
+	$.log(`⚠ ${$.name}, 无法找到缓存。`, "");
+}
 
 function cacheAqi(caches, timestamp, location, stationName, standardName, aqi, primaryPollutant) {
 	if (timestamp && aqi >= 0) {
