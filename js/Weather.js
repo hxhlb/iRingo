@@ -360,30 +360,29 @@ const AQI_STANDARDS = {
 		const coordinate = { latitude: params.lat, longitude: params.lng };
 		let requiredData, AIR_QUALITY, SCALE, NEXT_HOUR, PROVIDER;
 		switch (apiVersion) {
-			case "v1":
+			case "v1": {
 				requiredData = url.params?.include;
 				AIR_QUALITY = "air_quality";
 				SCALE = "airQualityScale";
 				NEXT_HOUR = "next_hour";
 				PROVIDER = "provider_name";
 				break;
-			case "v2":
+			}
+			case "v2": {
 				requiredData = url.params?.dataSets;
 				AIR_QUALITY = "airQuality";
 				SCALE = "scale";
 				NEXT_HOUR = "forecastNextHour";
 				PROVIDER = "providerName";
 				break;
-			default:
+			}
+			default: {
 				$.logErr(`❗️ ${$.name}, 不支持此版本的苹果天气。 API version = ${apiVersion}`);
+			}
 		}
 
 		const MISSION_TYPES = { AQI: "aqi", COMPARE_AQI: "compareAqi", NEXT_HOUR: "nextHour" };
-		const missionList = {
-			"www.weatherol.cn": [],
-			"api.caiyunapp.com": [],
-			"WAQI": [],
-		};
+		const missionList = { "www.weatherol.cn": [], "api.caiyunapp.com": [], "WAQI": [] };
 
 		const scaleName = data?.[AIR_QUALITY]?.[SCALE];
 		$.log(`🚧 ${$.name}, AQI刻度标准：${scaleName}`, "");
@@ -397,9 +396,7 @@ const AQI_STANDARDS = {
 				// use API when no AQI data or local converter is disabled
 				if (
 					!scaleName || (!Settings.AQI.Local.Switch
-						&& Settings.AQI.Targets.includes(data?.[AIR_QUALITY]?.["scale"]
-							?.slice(0, data[AIR_QUALITY]["scale"]?.lastIndexOf('.'))
-						)
+						&& Settings.AQI.Targets.includes(scaleName?.slice(0, scaleName?.lastIndexOf('.')))
 					)
 				) {
 					if (Settings.AQI.Source !== "Local") {
@@ -637,7 +634,7 @@ const AQI_STANDARDS = {
 			const airQuality = await outputAqi(
 				apiVersion,
 				// TODO
-				appleAqiConverter(AQI_STANDARDS[Settings.AQI.Local.Standard], data[AIR_QUALITY])
+				appleAqiConverter(AQI_STANDARDS[Settings.AQI.Local.Standard], data[AIR_QUALITY]),
 			);
 
 			data[AIR_QUALITY] = {
