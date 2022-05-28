@@ -696,7 +696,7 @@ const AQI_PROVIDERS = [
 			const aqi = data[AIR_QUALITY]?.[AQI_INDEX];
 
 			if (aqi >= 0) {
-				cacheAqi(Caches, reportedTimestamp, coordinate, data[AIR_QUALITY]?.source, scaleName, aqi);
+				cacheAqi(Caches, reportedTimestamp, coordinate, data[AIR_QUALITY]?.source, standardName, aqi);
 			} else {
 				$.log(`⚠ ${$.name}, AQI值不正确，放弃缓存`, "");
 			}
