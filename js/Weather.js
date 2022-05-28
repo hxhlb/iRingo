@@ -649,11 +649,15 @@ const AQI_PROVIDERS = [
 			if (Settings.AQI.Local.Switch) {
 				const standard = AQI_STANDARDS[Settings.AQI.Local.Standard];
 				if (Settings.AQI.Targets.includes(aqObjectStandardName)) {
+					$.log(`🚧 ${$.name}, 本地替换API数据：scale name = ${aqObjectStandardName}`, "");
+
 					airQuality = await outputAqi(apiVersion, {
 						...airQualityObject,
 						...pollutantsToAqi(standard, airQualityObject?.pollutants),
 					});
 				} else if (!airQualityObject && Settings.AQI.Targets.includes(appleStandardName)) {
+					$.log(`🚧 ${$.name}, 本地替换Apple数据：scale name = ${appleStandardName}`, "");
+
 					const providerName = data[AIR_QUALITY]?.[METADATA]?.[PROVIDER];
 
 					// fix amount of CO from QWeather
