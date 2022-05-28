@@ -499,7 +499,7 @@ const AQI_PROVIDERS = [
 						if (token) {
 							const PATHS = {
 								REALTIME: "realtime", MINUTELY: "minutely", HOURLY: "hourly",
-								DAILY: "DAILY", COMPLEX: "weather",
+								DAILY: "daily", COMPLEX: "weather",
 							};
 							const language = toColorfulCloudsLang(params.language);
 							const parameters = { "unit": "metric:v2", "lang": language };
