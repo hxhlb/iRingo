@@ -1916,13 +1916,18 @@ async function outputAqi(apiVersion, aqiObject) {
 	airQuality.primaryPollutant = aqiObject.primaryPollutant;
 	airQuality.source = aqiObject.sourceName;
 
-	$.log(`🎉 ${$.name}, ${outputAqi.name}完成`, '');
 	Object.keys(airQuality).forEach(key =>
-		(airQuality[key] === null || airQuality[key] === undefined || airQuality[key] === NaN)
-			&& delete airQuality[key]
+		(
+			airQuality[key] === null
+			|| airQuality[key] === undefined
+			|| (typeof airQuality[key] === "number" && isNaN(airQuality[key]))
+		) && delete airQuality[key]
 	);
+
+	$.log(`🎉 ${$.name}, ${outputAqi.name}完成`, '');
+
 	return airQuality;
-};
+}
 
 /**
  * output forecast NextHour Data
@@ -2782,9 +2787,13 @@ function toMetadata(
 	}
 
 	Object.keys(metadata).forEach(key => 
-		(metadata[key] === null || metadata[key] === undefined || metadata[key] === NaN)
-			&& delete metadata[key]
+		(
+			metadata[key] === null
+			|| metadata[key] === undefined
+			|| (typeof metadata[key] === "number" && isNaN(metadata[key]))
+		) && delete metadata[key]
 	);
+
 	return metadata;
 };
 
