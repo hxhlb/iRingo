@@ -1201,7 +1201,7 @@ function pollutantsToAqi(standard, pollutants) {
 		return convertedAqiObject;
 	} else {
 		$.logErr(
-			`❗️ ${$.name}: ${appleAqiConverter.name}执行失败，没有污染物数据或换算标准。`,
+			`❗️ ${$.name}: ${pollutantsToAqi.name}执行失败，没有污染物数据或换算标准。`,
 			`pollutants = ${JSON.stringify(pollutants)}`, `standard = ${JSON.stringify(standard)}`, "",
 		);
 		return {};
