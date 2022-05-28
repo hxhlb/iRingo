@@ -512,6 +512,11 @@ const AQI_PROVIDERS = [
 									+ 1000 * 60 * 45)
 									// ColorfulClouds accept second as parameter
 									/ 1000;
+
+								$.log(
+									`🚧 ${$.name}, ${providerName}：`,
+									`尝试获取${new Date(parameters.begin * 1000)}时的历史数据`, "",
+								);
 							}
 
 							let path, providerName;
