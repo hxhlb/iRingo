@@ -1257,8 +1257,9 @@ function getCcAirQuality(dataWithRealtime) {
 function colorfulCloudsToAqi(providerName, realtimeAndHourlyData, url) {
 	const airQuality = getCcAirQuality(realtimeAndHourlyData);
 
+	// TODO
 	function getCcStandard(airQuality) {
-		return airQuality.aqi.usa ? {
+		return !airQuality.aqi.usa ? {
 			...HJ_633,
 			CONCENTRATION_BREAKPOINTS: {
 				...HJ_633.CONCENTRATION_BREAKPOINTS,
