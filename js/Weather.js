@@ -484,7 +484,7 @@ const AQI_PROVIDERS = [
 								nextHourObject = colorfulCloudsToNextHour(
 									providerName,
 									// TODO
-									weatherData.result?.hourly?.skycon,
+									getCcWeatherType(weatherData?.server_time, weatherData?.result?.hourly?.skycon),
 									weatherData,
 								);
 							} else {
@@ -580,7 +580,9 @@ const AQI_PROVIDERS = [
 									nextHourObject = colorfulCloudsToNextHour(
 										providerName,
 										// TODO
-										weatherData.result?.hourly?.skycon,
+										getCcWeatherType(
+											weatherData?.server_time, weatherData?.result?.hourly?.skycon,
+										),
 										weatherData,
 									);
 								} else {
@@ -1431,10 +1433,16 @@ function colorfulCloudsToAqiComparison(realtimeAndHourlyData) {
  * @param {Array} skycons - skycon array from ColorfulClouds
  * @return {string} one of WEATHER_TYPES
  */
- function getCcWeatherType(skycons) {
+function getCcWeatherType(serverTimeString, skycons) {
+	const serverTime = parseInt(serverTimeString);
+	const serverTimestamp = !isNaN(serverTime) ? serverTime * 1000 : (+ new Date());
+	const nowHourTimestamp = (new Date(serverTimestamp)).setMinutes(0, 0, 0);
 	// enough for us
 	const SKY_CONDITION_KEYWORDS = { CLEAR: "CLEAR", RAIN: "RAIN", SNOW: "SNOW" };
-	const skyCondition = skycons?.map(skycon => skycon.value)?.find(condition =>
+	const skyConditions = skycons?.filter(skycon =>
+		skycon?.datetime ? (+ new Date(skycon.datetime)) >= nowHourTimestamp : false
+	);
+	const skyCondition = skyConditions?.map(skycon => skycon.value)?.find(condition =>
 		condition.includes(SKY_CONDITION_KEYWORDS.RAIN) ||
 		condition.includes(SKY_CONDITION_KEYWORDS.SNOW)
 	);
@@ -1449,7 +1457,7 @@ function colorfulCloudsToAqiComparison(realtimeAndHourlyData) {
 			return WEATHER_TYPES.RAIN;
 		}
 	}
-};
+}
 
 /**
  * Covert data from ColorfulClouds to NextHour object
@@ -1458,7 +1466,7 @@ function colorfulCloudsToAqiComparison(realtimeAndHourlyData) {
  * @param {Array} hourlySkycons - skycon array in hourly
  * @return {Object} object for `outputNextHour()`
  */
- function colorfulCloudsToNextHour(providerName, hourlySkycons, dataWithMinutely) {
+function colorfulCloudsToNextHour(providerName, weatherType, dataWithMinutely) {
 	const SUPPORTED_APIS = [ 2 ];
 	// words that used to insert into description
 	const AFTER = {
@@ -1756,7 +1764,7 @@ function colorfulCloudsToAqiComparison(realtimeAndHourlyData) {
 		precipStandard,
 		toMinutes(
 			precipStandard,
-			getCcWeatherType(hourlySkycons),
+			weatherType,
 			minutelyDescription,
 			precipitationTwoHr,
 			probability,
