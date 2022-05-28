@@ -362,12 +362,13 @@ const AQI_PROVIDERS = [
 		const params = await getParams(url.path);
 		const apiVersion = params.ver;
 		const coordinate = { latitude: params.lat, longitude: params.lng };
-		let requiredData, AIR_QUALITY, SCALE, NEXT_HOUR, PROVIDER, PREVIOUS_COMPARISON;
+		let requiredData, AIR_QUALITY, AQI_SCALE, METADATA, NEXT_HOUR, PROVIDER, PREVIOUS_COMPARISON;
 		switch (apiVersion) {
 			case "v1": {
 				requiredData = url.params?.include;
 				AIR_QUALITY = "air_quality";
-				SCALE = "airQualityScale";
+				AQI_SCALE = "airQualityScale";
+				METADATA = "metadata";
 				NEXT_HOUR = "next_hour";
 				PROVIDER = "provider_name";
 				break;
@@ -375,7 +376,8 @@ const AQI_PROVIDERS = [
 			case "v2": {
 				requiredData = url.params?.dataSets;
 				AIR_QUALITY = "airQuality";
-				SCALE = "scale";
+				AQI_SCALE = "scale";
+				METADATA = "metadata";
 				NEXT_HOUR = "forecastNextHour";
 				PROVIDER = "providerName";
 				PREVIOUS_COMPARISON = "previousDayComparison";
@@ -393,7 +395,7 @@ const AQI_PROVIDERS = [
 
 		// AQI
 		if (Settings.AQI.Switch) {
-			const scaleName = data?.[AIR_QUALITY]?.[SCALE];
+			const scaleName = data?.[AIR_QUALITY]?.[AQI_SCALE];
 			$.log(`🚧 ${$.name}, AQI刻度标准：${scaleName}`, "");
 
 			// check the requirements of Apple weather
@@ -414,10 +416,13 @@ const AQI_PROVIDERS = [
 					if (!PREVIOUS_COMPARISON) {
 						$.log(`⚠ ${$.name}, 当前版本（API version = ${apiVersion}）的苹果天气不支持对比昨日AQI`, "");
 					} else {
-						const previousDayComparison = data?.[AIR_QUALITY]?.["previousDayComparison"];
+						const REPORTED_TIME = "reportedTime";
+						const SOURCE = "source";
+
+						const previousDayComparison = data?.[AIR_QUALITY]?.[PREVIOUS_COMPARISON];
 						// try to replace no data and unknown `previousDayComparison`
 						if (!previousDayComparison || previousDayComparison === AQI_COMPARISON.UNKNOWN) {
-							const reportedTime = data?.[AIR_QUALITY]?.["metadata"]?.["reportedTime"];
+							const reportedTime = data?.[AIR_QUALITY]?.[METADATA]?.[REPORTED_TIME];
 							const reportedTimestamp = reportedTime
 								? (+ new Date(reportedTime)) : (new Date()).setMinutes(0, 0, 0);
 
@@ -433,7 +438,7 @@ const AQI_PROVIDERS = [
 							}
 
 							cachedAqi = getCachedAqi(
-								Caches?.aqis, reportedTimestamp, coordinate, data?.[AIR_QUALITY]?.["source"], scaleName
+								Caches?.aqis, reportedTimestamp, coordinate, data?.[AIR_QUALITY]?.[SOURCE], scaleName
 							);
 
 							if (!cachedAqi && Settings.AQI.Comparison.Source !== "Local") {
@@ -616,39 +621,58 @@ const AQI_PROVIDERS = [
 			}
 		}
 
-		if (airQualityObject) {
-			const airQuality = await outputAqi(apiVersion, airQualityObject);
+		if (airQualityObject || Settings.AQI.Local.Switch) {
+			const POLLUTANTS = "pollutants";
+			const SOURCE = "source";
 
-			data[AIR_QUALITY] = {
-				...data?.[AIR_QUALITY],
-				...airQuality,
-				"metadata": { ...data?.[AIR_QUALITY]?.["metadata"], ...airQuality?.["metadata"] },
-				"pollutants": { ...data?.[AIR_QUALITY]?.["pollutants"], ...airQuality?.["pollutants"]},
-			};
+			const aqObjectStandardName = typeof airQualityObject?.scale === "string"
+				? airQualityObject.scale.slice(0, airQualityObject.scale.indexOf('.')) : null;
+			const appleStandardName = typeof data?.[AIR_QUALITY]?.[AQI_SCALE] === "string"
+				? data[AIR_QUALITY][AQI_SCALE].slice(0, data[AIR_QUALITY][AQI_SCALE].indexOf('.')) : null;
 
-			$.log(`🎉 ${$.name}, AQI合并完成`, "");
-		}
+			let airQuality;
+			if (Settings.AQI.Local.Switch) {
+				const standard = AQI_STANDARDS[Settings.AQI.Local.Standard];
+				if (Settings.AQI.Targets.includes(aqObjectStandardName)) {
+					airQuality = outputAqi(apiVersion, {
+						...airQualityObject,
+						...pollutantsToAqi(standard, airQualityObject?.pollutants),
+					});
+				} else if (!airQualityObject && Settings.AQI.Targets.includes(appleStandardName)) {
+					const providerName = airQuality?.[METADATA]?.[PROVIDER];
 
-		if (
-			Settings.AQI.Local.Switch
-				&& Settings.AQI.Targets.includes(
-					data?.[AIR_QUALITY]?.["scale"]?.slice(0, data[AIR_QUALITY]["scale"]?.lastIndexOf('.'))
-				)
-		) {
-			$.log(`🚧 ${$.name}, 本地换算AQI`, "");
+					// fix amount of CO from QWeather
+					if (["和风天气", "QWeather"].includes(providerName)) {
+						const coName = "CO";
+						const co = data[AIR_QUALITY]?.[POLLUTANTS]?.[coName];
 
-			const airQuality = await outputAqi(
-				apiVersion,
-				// TODO
-				appleAqiConverter(AQI_STANDARDS[Settings.AQI.Local.Standard], data[AIR_QUALITY]),
-			);
+						//
+						if (co && co?.amount && co?.unit) {
+							data[AIR_QUALITY][POLLUTANTS][coName].amount =
+								fixQweatherCo(co.amount, co.unit);
+						}
+					}
 
-			data[AIR_QUALITY] = {
-				...data?.[AIR_QUALITY],
-				...airQuality,
-				"metadata": { ...data?.[AIR_QUALITY]?.["metadata"], ...airQuality?.["metadata"] },
-				"pollutants": { ...data?.[AIR_QUALITY]?.["pollutants"], ...airQuality?.["pollutants"]},
-			};
+					airQuality = outputAqi(
+						apiVersion, pollutantsToAqi(standard, data[AIR_QUALITY]?.[POLLUTANTS]),
+					);
+
+					// merge station name and provider name
+					if (providerName) {
+						airQuality[METADATA][PROVIDER] = toProviderName(
+							providerName, data[AIR_QUALITY]?.[SOURCE],
+						);
+					}
+				}
+			}
+
+			if (airQualityObject && !airQuality) {
+				airQuality = outputAqi(apiVersion, airQualityObject);
+			}
+
+			data[AIR_QUALITY] = { ...data?.[AIR_QUALITY], ...airQuality };
+			data[AIR_QUALITY][METADATA] = { ...data?.[AIR_QUALITY]?.[METADATA], ...airQuality?.[METADATA] };
+			data[AIR_QUALITY][POLLUTANTS] = { ...data?.[AIR_QUALITY]?.[POLLUTANTS], ...airQuality?.[POLLUTANTS] };
 
 			$.log(`🎉 ${$.name}, AQI合并完成`, "");
 		}
@@ -656,18 +680,18 @@ const AQI_PROVIDERS = [
 		if (
 			Settings.AQI.Comparison.Switch
 			&& data?.[AIR_QUALITY]
+			// check support
 			&& PREVIOUS_COMPARISON
 			&& data[AIR_QUALITY]?.[PREVIOUS_COMPARISON] === AQI_COMPARISON.UNKNOWN
 		) {
-			const METADATA = "metadata";
 			const REPORTED_TIME = "reportedTime";
 			const AQI_INDEX = "index";
 
 			const reportedTime = data[AIR_QUALITY]?.[METADATA]?.[REPORTED_TIME];
 			const reportedTimestamp = reportedTime
 				? (+ new Date(reportedTime)) : (new Date()).setMinutes(0, 0, 0);
-			const standardName = data[AIR_QUALITY]?.[SCALE]?.slice(
-				0, data[AIR_QUALITY][SCALE]?.lastIndexOf('.'),
+			const standardName = data[AIR_QUALITY]?.[AQI_SCALE]?.slice(
+				0, data[AIR_QUALITY][AQI_SCALE]?.lastIndexOf('.'),
 			);
 			const aqi = data[AIR_QUALITY]?.[AQI_INDEX];
 
@@ -711,8 +735,9 @@ const AQI_PROVIDERS = [
 			data[NEXT_HOUR] = {
 				...data?.[NEXT_HOUR],
 				...nextHour,
-				"metadata": { ...data?.[NEXT_HOUR]?.["metadata"], ...nextHour?.["metadata"] },
 			};
+
+			data[NEXT_HOUR][METADATA] = { ...data?.[NEXT_HOUR]?.[METADATA], ...nextHour?.[METADATA] };
 
 			$.log(`🎉 ${$.name}, 下一小时降水强度合并完成`, "");
 		}
@@ -1096,79 +1121,54 @@ async function colorfulClouds(
 	});
 }
 
-function appleAqiConverter(standard, airQuality) {
-	const {
-		IOS_SCALE, AQI_LEVELS, SIGNIFICANT_LEVEL,
-		AQI_RANGES, CONCENTRATION_UNITS, CONCENTRATION_BREAKPOINTS,
-	} = standard;
-	let SCALE, UG_M3, PROVIDER_NAME;
-	const pollutants = airQuality?.pollutants;
+function fixQweatherCo(amount, unit) {
+	if (unit === POLLUTANT_UNITS.SLASH.UG_M3 || unit === POLLUTANT_UNITS.TEXT.UG_M3) {
+		const mgAmount = pollutantUnitConverter(
+			POLLUTANT_UNITS.TEXT.UG_M3, HJ_633.CONCENTRATION_UNITS.CO, amount, null, null,
+		);
 
-	switch (airQuality?.metadata?.version) {
-		case 1:
-			SCALE = "airQualityScale";
-			UG_M3 = POLLUTANT_UNITS.SLASH.UG_M3;
-			PROVIDER_NAME = "provider_name";
-			break;
-		case 2:
-		default:
-			SCALE = "scale";
-			UG_M3 = POLLUTANT_UNITS.TEXT.UG_M3;
-			PROVIDER_NAME = "providerName";
-			break;
-	};
+		if (mgAmount < 0.1) {
+			const convertedAmount = pollutantUnitConverter(
+				HJ_633.CONCENTRATION_UNITS.CO, POLLUTANT_UNITS.TEXT.UG_M3, amount, null, null,
+			);
 
-	function toProviderName(providerName, source) {
-		switch (providerName) {
-			case "和风天气":
-				return `${source}（${providerName}）`;
-			case "QWeather":
-				return `${source} (${providerName})`;
-			default:
-				return providerName;
+			$.log(
+				`🚧 ${$.name}, ${fixQweatherCo.name}：已修正一氧化碳浓度，`
+				`原浓度${amount} ${unit}，现浓度${convertedAmount} ${HJ_633.CONCENTRATION_UNITS.CO}`, "",
+			);
+
+			return convertedAmount;
 		}
 	}
 
-	if (pollutants && airQuality?.[SCALE] !== IOS_SCALE) {
+	return amount;
+}
+
+function toProviderName(providerName, source) {
+	switch (providerName) {
+		case "和风天气": {
+			return `${source}（${providerName}）`;
+		}
+		case "QWeather": {
+			return `${source} (${providerName})`;
+		}
+		default: {
+			return providerName;
+		}
+	}
+}
+
+function pollutantsToAqi(standard, pollutants) {
+	if (pollutants && standard) {
 		$.log(
-			`🚧 ${$.name}, ${appleAqiConverter.name}: `,
-			`airQuality[SCALE] = ${airQuality[SCALE]}`, "",
+			`🚧 ${$.name}, ${pollutantsToAqi.name}：正在将污染物转换为AQI，`,
+			`scale = ${standard.IOS_SCALE}`, "",
 		);
 
-		if (airQuality[SCALE] === HJ_633.IOS_SCALE) {
-			// fix unit of CO from QWeather, usually unit of CO is mg/m3
-			const coName = "CO";
-			const co = pollutants[coName];
-
-			$.log(
-				`🚧 ${$.name}, ${appleAqiConverter.name}: `,
-				`typeof co?.amount = ${typeof co?.amount}`, "",
-			);
-
-			if (!isNaN(co?.amount) && co?.unit && co.unit === UG_M3) {
-				const coAqi = toAqi(
-					HJ_633.AQI_RANGES,
-					HJ_633.CONCENTRATION_BREAKPOINTS,
-					coName,
-					pollutantUnitConverter(
-						toTextStyleUnit(co.unit), HJ_633.CONCENTRATION_UNITS.CO, co.amount, null, coName,
-					),
-				);
-
-				$.log(
-					`🚧 ${$.name}, ${appleAqiConverter.name}: `,
-					`coAqi = ${coAqi}`, "",
-				);
-
-				// lowest value of coAqi should be 1
-				if (coAqi < 1) {
-					pollutants[coName].amount =
-						pollutantUnitConverter(
-							HJ_633.CONCENTRATION_UNITS.CO, toTextStyleUnit(co.unit), co.amount, null, coName
-						);
-				}
-			}
-		}
+		const {
+			IOS_SCALE, AQI_LEVELS, SIGNIFICANT_LEVEL,
+			AQI_RANGES, CONCENTRATION_UNITS, CONCENTRATION_BREAKPOINTS,
+		} = standard;
 
 		const pollutantsWithAqi = pollutantsToAqis(
 			AQI_RANGES,
@@ -1183,21 +1183,30 @@ function appleAqiConverter(standard, airQuality) {
 		const aqiLevel = toAqiLevel(AQI_RANGES, AQI_LEVELS, pollutantsWithAqi.index);
 		const aqiCategoryIndex = aqiLevel === AQI_LEVELS.OVER_RANGE ? aqiLevel - 1 : aqiLevel;
 
-		return toAqiObject(
+		const convertedAqiObject = toAqiObject(
 			null, null, null, null, null, null,
-			toProviderName(airQuality?.metadata?.[PROVIDER_NAME], airQuality?.source), null, null, null,
-			pollutants, IOS_SCALE, aqiIndex, aqiCategoryIndex,
-			aqiLevel >= SIGNIFICANT_LEVEL, AQI_COMPARISON.UNKNOWN,
-			pollutantsWithAqi.primaryPollutant,
+			null, null, null, null, pollutants, IOS_SCALE, aqiIndex, aqiCategoryIndex,
+			aqiLevel >= SIGNIFICANT_LEVEL, AQI_COMPARISON.UNKNOWN, pollutantsWithAqi.primaryPollutant,
 		);
+
+		// delete null value for merge
+		Object.keys(convertedAqiObject).forEach(key =>
+			(
+				convertedAqiObject[key] === null
+				|| convertedAqiObject[key] === undefined
+				|| (typeof convertedAqiObject[key] === "number" && isNaN(convertedAqiObject[key]))
+			) && delete convertedAqiObject[key]
+		);
+
+		return convertedAqiObject;
 	} else {
 		$.logErr(
-			`❗️ ${$.name}: ${appleAqiConverter.name}执行失败，没有污染物数据。`,
-			`pollutants = ${JSON.stringify(pollutants)}`, ""
+			`❗️ ${$.name}: ${appleAqiConverter.name}执行失败，没有污染物数据或换算标准。`,
+			`pollutants = ${JSON.stringify(pollutants)}`, `standard = ${JSON.stringify(standard)}`, "",
 		);
-		return airQuality;
+		return {};
 	}
-};
+}
 
 function getCcAirQuality(dataWithRealtime) {
 	const apiVersion = dataWithRealtime?.api_version;
