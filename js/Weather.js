@@ -1195,14 +1195,13 @@ function pollutantsToAqi(standard, pollutants) {
 			Object.values(pollutants),
 		);
 
-		const aqiIndex = pollutantsWithAqi.index;
 		const aqiLevel = toAqiLevel(AQI_RANGES, AQI_LEVELS, pollutantsWithAqi.index);
 		const aqiCategoryIndex = aqiLevel === AQI_LEVELS.OVER_RANGE ? aqiLevel - 1 : aqiLevel;
 
 		const convertedAqiObject = toAqiObject(
 			null, null, null, null, null, null,
-			null, null, null, null, pollutants, IOS_SCALE, aqiIndex, aqiCategoryIndex,
-			aqiLevel >= SIGNIFICANT_LEVEL, AQI_COMPARISON.UNKNOWN, pollutantsWithAqi.primaryPollutant,
+			null, null, null, null, pollutants, IOS_SCALE, pollutantsWithAqi.index,
+			aqiCategoryIndex,aqiLevel >= SIGNIFICANT_LEVEL, null, pollutantsWithAqi.primaryPollutant,
 		);
 
 		// delete null value for merge
