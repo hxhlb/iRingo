@@ -1216,9 +1216,9 @@ function getCcAirQuality(dataWithRealtime) {
 
 		// https://docs.caiyunapp.com/docs/v2.4/intro#%E4%B8%8D%E5%85%BC%E5%AE%B9%E7%9A%84%E6%9B%B4%E6%96%B0
 		// https://open.caiyunapp.com/%E5%BD%A9%E4%BA%91%E5%A4%A9%E6%B0%94_API/v2.5#.E6.A0.BC.E5.BC.8F.E5.8F.98.E6.9B.B4
-		if (2.4 <= versionNumber < 3) {
+		if (2.4 <= versionNumber && versionNumber < 3) {
 			return dataWithRealtime?.result?.realtime?.air_quality;
-		} else if (2.2 <= versionNumber < 2.4) {
+		} else if (2.2 <= versionNumber && versionNumber < 2.4) {
 			const { aqi, pm25, pm10, o3, so2, no2, co } = dataWithRealtime?.result;
 			return { pm25, pm10, o3, so2, no2, co, aqi: {chn: aqi, usa: null} };
 		} else {
@@ -1376,9 +1376,14 @@ function colorfulCloudsToAqiComparison(realtimeAndHourlyData) {
 
 	const aqis = realtimeAndHourlyData?.result?.hourly?.air_quality?.aqi;
 	// 59 minutes as range
-	const aqi = aqis?.find(aqi =>
-			aqi?.datetime && yesterdayTimestamp <= (+ new Date(aqi.datetime)) < yesterdayTimestamp + 1000 * 60 * 59
-	);
+	const aqi = aqis?.find(aqi => {
+		if (aqi?.datetime) {
+			const timestamp = (+new Date(aqi.datetime));
+			return yesterdayTimestamp <= timestamp && timestamp < yesterdayTimestamp + 1000 * 60 * 59;
+		}
+
+		return false;
+	});
 	const yesterdayStandardName = aqi?.value?.usa
 		? EPA_454.IOS_SCALE.slice(0, EPA_454.IOS_SCALE.indexOf('.'))
 		: HJ_633.IOS_SCALE.slice(0, HJ_633.IOS_SCALE.indexOf('.'));
@@ -2280,7 +2285,7 @@ async function outputNextHour(apiVersion, nextHourObject, debugOptions) {
 function getCachedAqi(cachedAqis, timestamp, location, stationName, scaleName) {
 	if (cachedAqis) {
 		const key = Object.keys(cachedAqis).find(ts =>
-			timestamp <= ts < timestamp + 1000 * 60 * 59
+			timestamp <= ts && ts < timestamp + 1000 * 60 * 59
 		);
 
 		const cache = cachedAqis[key]?.find(value =>
