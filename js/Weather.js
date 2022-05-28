@@ -1390,11 +1390,14 @@ function colorfulCloudsToAqiComparison(realtimeAndHourlyData) {
 	const yesterdayAqi = aqi?.value?.usa ?? aqi?.value;
 
 	if (todayStandardName !== yesterdayStandardName) {
-		$.log(`⚠ ${$.name}, AQI标准不同，放弃比较。昨日AQI标准 ${yesterdayStandardName}，今日${todayStandardName}`, "");
+		$.log(
+			`⚠ ${$.name}, AQI标准不同，放弃比较。 ${colorfulCloudsToAqiComparison.name}：`,
+			`昨日AQI标准为${yesterdayStandardName}，今日AQI标准为${todayStandardName}`, ""
+		);
 		return AQI_COMPARISON.UNKNOWN;
 	} else {
 		$.log(
-			`🎉 ${$.name}, ${colorfulCloudsToAqiComparison.name}：`
+			`🎉 ${$.name}, ${colorfulCloudsToAqiComparison.name}：`,
 			`昨日AQI = ${yesterdayAqi}，今日AQI = ${todayAqi}`, "",
 		);
 
