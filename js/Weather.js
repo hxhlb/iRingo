@@ -1368,6 +1368,11 @@ function waqiToAqi(feedData) {
 };
 
 function colorfulCloudsToAqiComparison(realtimeAndHourlyData) {
+	$.log(
+		`🚧 ${$.name}, ${colorfulCloudsToAqiComparison.name}：`,
+		`realtimeAndHourlyData = ${JSON.stringify(realtimeAndHourlyData)}`, "",
+	);
+
 	const airQuality = getCcAirQuality(realtimeAndHourlyData);
 
 	const serverTime = parseInt(realtimeAndHourlyData?.server_time);
