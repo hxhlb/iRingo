@@ -479,6 +479,7 @@ const AQI_PROVIDERS = [
 								Settings.HTTPHeaders, TYPES.FORECAST, coordinate,
 							);
 
+							// TODO: ColorfulClouds said this may be deprecated in future
 							if (weatherData?.result?.minutely?.datasource !== "gfs") {
 								nextHourObject = colorfulCloudsToNextHour(
 									providerName,
@@ -574,6 +575,7 @@ const AQI_PROVIDERS = [
 							}
 
 							if (missions.includes(MISSION_TYPES.NEXT_HOUR)) {
+								// TODO: ColorfulClouds said this may be deprecated in future
 								if (weatherData?.result?.minutely?.datasource !== "gfs") {
 									nextHourObject = colorfulCloudsToNextHour(
 										providerName,
