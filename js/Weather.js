@@ -634,7 +634,7 @@ const AQI_PROVIDERS = [
 			if (Settings.AQI.Local.Switch) {
 				const standard = AQI_STANDARDS[Settings.AQI.Local.Standard];
 				if (Settings.AQI.Targets.includes(aqObjectStandardName)) {
-					airQuality = outputAqi(apiVersion, {
+					airQuality = await outputAqi(apiVersion, {
 						...airQualityObject,
 						...pollutantsToAqi(standard, airQualityObject?.pollutants),
 					});
@@ -653,7 +653,7 @@ const AQI_PROVIDERS = [
 						}
 					}
 
-					airQuality = outputAqi(
+					airQuality = await outputAqi(
 						apiVersion, pollutantsToAqi(standard, data[AIR_QUALITY]?.[POLLUTANTS]),
 					);
 
@@ -667,7 +667,7 @@ const AQI_PROVIDERS = [
 			}
 
 			if (airQualityObject && !airQuality) {
-				airQuality = outputAqi(apiVersion, airQualityObject);
+				airQuality = await outputAqi(apiVersion, airQualityObject);
 			}
 
 			data[AIR_QUALITY] = { ...data?.[AIR_QUALITY], ...airQuality };
@@ -731,12 +731,12 @@ const AQI_PROVIDERS = [
 		}
 
 		if (nextHourObject) {
-			const nextHour = outputNextHour(apiVersion, nextHourObject, null);
+			const nextHour = await outputNextHour(apiVersion, nextHourObject, null);
+
 			data[NEXT_HOUR] = {
 				...data?.[NEXT_HOUR],
 				...nextHour,
 			};
-
 			data[NEXT_HOUR][METADATA] = { ...data?.[NEXT_HOUR]?.[METADATA], ...nextHour?.[METADATA] };
 
 			$.log(`🎉 ${$.name}, 下一小时降水强度合并完成`, "");
