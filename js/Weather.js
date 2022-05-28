@@ -645,7 +645,7 @@ const AQI_PROVIDERS = [
 						...pollutantsToAqi(standard, airQualityObject?.pollutants),
 					});
 				} else if (!airQualityObject && Settings.AQI.Targets.includes(appleStandardName)) {
-					const providerName = airQuality?.[METADATA]?.[PROVIDER];
+					const providerName = data[AIR_QUALITY]?.[METADATA]?.[PROVIDER];
 
 					// fix amount of CO from QWeather
 					if (["和风天气", "QWeather"].includes(providerName)) {
@@ -676,9 +676,11 @@ const AQI_PROVIDERS = [
 				airQuality = await outputAqi(apiVersion, airQualityObject);
 			}
 
+			const rawMetadata = data?.[AIR_QUALITY]?.[METADATA];
+			const rawPollutants = data?.[AIR_QUALITY]?.[POLLUTANTS];
 			data[AIR_QUALITY] = { ...data?.[AIR_QUALITY], ...airQuality };
-			data[AIR_QUALITY][METADATA] = { ...data?.[AIR_QUALITY]?.[METADATA], ...airQuality?.[METADATA] };
-			data[AIR_QUALITY][POLLUTANTS] = { ...data?.[AIR_QUALITY]?.[POLLUTANTS], ...airQuality?.[POLLUTANTS] };
+			data[AIR_QUALITY][METADATA] = { ...rawMetadata, ...airQuality?.[METADATA] };
+			data[AIR_QUALITY][POLLUTANTS] = { ...rawPollutants, ...airQuality?.[POLLUTANTS] };
 
 			$.log(`🎉 ${$.name}, AQI合并完成`, "");
 		}
@@ -739,11 +741,9 @@ const AQI_PROVIDERS = [
 		if (nextHourObject) {
 			const nextHour = await outputNextHour(apiVersion, nextHourObject, null);
 
-			data[NEXT_HOUR] = {
-				...data?.[NEXT_HOUR],
-				...nextHour,
-			};
-			data[NEXT_HOUR][METADATA] = { ...data?.[NEXT_HOUR]?.[METADATA], ...nextHour?.[METADATA] };
+			const rawMetadata = data?.[NEXT_HOUR]?.[METADATA];
+			data[NEXT_HOUR] = { ...data?.[NEXT_HOUR], ...nextHour };
+			data[NEXT_HOUR][METADATA] = { ...rawMetadata, ...nextHour?.[METADATA] };
 
 			$.log(`🎉 ${$.name}, 下一小时降水强度合并完成`, "");
 		}
