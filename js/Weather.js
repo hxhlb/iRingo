@@ -628,7 +628,7 @@ const AQI_PROVIDERS = [
 			}
 		}
 
-		if (airQualityObject || Settings.AQI.Local.Switch) {
+		if (requiredData?.includes(AIR_QUALITY) && (airQualityObject || Settings.AQI.Local.Switch)) {
 			const POLLUTANTS = "pollutants";
 			const SOURCE = "source";
 
@@ -687,7 +687,8 @@ const AQI_PROVIDERS = [
 		}
 
 		if (
-			Settings.AQI.Comparison.Switch
+			requiredData?.includes(AIR_QUALITY)
+			&& Settings.AQI.Comparison.Switch
 			&& data?.[AIR_QUALITY]
 			// check support
 			&& PREVIOUS_COMPARISON
@@ -739,7 +740,7 @@ const AQI_PROVIDERS = [
 			}
 		}
 
-		if (nextHourObject) {
+		if (requiredData?.includes(NEXT_HOUR) && nextHourObject) {
 			const nextHour = await outputNextHour(apiVersion, nextHourObject, null);
 
 			const rawMetadata = data?.[NEXT_HOUR]?.[METADATA];
