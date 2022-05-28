@@ -1154,7 +1154,7 @@ function fixQweatherCo(amount, unit) {
 
 			$.log(
 				`🚧 ${$.name}, ${fixQweatherCo.name}：已修正一氧化碳浓度，`,
-				`原浓度${amount} ${unit}，现浓度${convertedAmount} ${HJ_633.CONCENTRATION_UNITS.CO}`, "",
+				`原浓度${amount} ${unit}，现浓度${convertedAmount} ${unit}`, "",
 			);
 
 			return convertedAmount;
