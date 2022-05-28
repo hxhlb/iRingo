@@ -565,7 +565,11 @@ const AQI_PROVIDERS = [
 								airQualityObject = colorfulCloudsToAqi(providerName, weatherData, "https://caiyunai.com/weather/");
 							}
 
-							if (missions.includes(MISSION_TYPES.COMPARE_AQI)) {
+							// colorfulCloudsToAqi() will handle previousDayComparison
+							if (
+								missions.includes(MISSION_TYPES.COMPARE_AQI)
+								&& !missions.includes(MISSION_TYPES.AQI)
+							) {
 								aqiComparison = colorfulCloudsToAqiComparison(weatherData);
 							}
 
