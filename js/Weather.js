@@ -1392,7 +1392,7 @@ function colorfulCloudsToAqiComparison(realtimeAndHourlyData) {
 	if (todayStandardName !== yesterdayStandardName) {
 		$.log(
 			`⚠ ${$.name}, AQI标准不同，放弃比较。 ${colorfulCloudsToAqiComparison.name}：`,
-			`昨日AQI标准为${yesterdayStandardName}，今日AQI标准为${todayStandardName}`, ""
+			`昨日AQI标准为${yesterdayStandardName}，今日AQI标准为${todayStandardName}`, "",
 		);
 		return AQI_COMPARISON.UNKNOWN;
 	} else {
