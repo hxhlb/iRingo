@@ -503,22 +503,6 @@ const AQI_PROVIDERS = [
 							const language = toColorfulCloudsLang(params.language);
 							const parameters = { "unit": "metric:v2", "lang": language };
 
-							if (missions.includes(MISSION_TYPES.COMPARE_AQI)) {
-								// AQI is updated by hourly
-								parameters["begin"] = ((new Date()).setMinutes(0, 0, 0)
-									// minus a day
-									- 1000 * 60 * 60 * 24
-									// add 45 minutes for possible delay of station data
-									+ 1000 * 60 * 45)
-									// ColorfulClouds accept second as parameter
-									/ 1000;
-
-								$.log(
-									`🚧 ${$.name}, ${providerName}：`,
-									`尝试获取${new Date(parameters.begin * 1000)}时的历史数据`, "",
-								);
-							}
-
 							let path, providerName;
 							if (missions.length > 1) {
 								path = PATHS.COMPLEX;
@@ -553,6 +537,23 @@ const AQI_PROVIDERS = [
 									providerName = "ColorfulClouds";
 									break;
 								}
+							}
+
+							if (missions.includes(MISSION_TYPES.COMPARE_AQI)) {
+								// AQI is updated by hourly
+								const yesterdayHourTimestamp = ((new Date()).setMinutes(0, 0, 0)
+									// minus a day
+									- 1000 * 60 * 60 * 24
+									// add 45 minutes for possible delay of station data
+									+ 1000 * 60 * 45);
+
+								// ColorfulClouds accept second as parameter
+								parameters["begin"] = yesterdayHourTimestamp / 1000;
+
+								$.log(
+									`🚧 ${$.name}, ${providerName}：`,
+									`尝试获取${new Date(yesterdayHourTimestamp)}时的历史数据`, "",
+								);
 							}
 
 							const weatherData = await colorfulClouds(
