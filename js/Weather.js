@@ -494,6 +494,7 @@ const AQI_PROVIDERS = [
 					}
 					case "api.caiyunapp.com": {
 						const token = Settings.ColorfulClouds.Token;
+						const ccApiVersion = "v2.6";
 
 						if (token) {
 							const PATHS = {
@@ -557,7 +558,7 @@ const AQI_PROVIDERS = [
 							}
 
 							const weatherData = await colorfulClouds(
-								Settings.HTTPHeaders, apiVersion, token, coordinate, path, parameters,
+								Settings.HTTPHeaders, ccApiVersion, token, coordinate, path, parameters,
 							);
 
 							if (missions.includes(MISSION_TYPES.AQI)) {
@@ -1225,7 +1226,10 @@ function getCcAirQuality(dataWithRealtime) {
 		if (2.4 <= versionNumber && versionNumber < 3) {
 			return dataWithRealtime?.result?.realtime?.air_quality;
 		} else if (2.2 <= versionNumber && versionNumber < 2.4) {
-			const { aqi, pm25, pm10, o3, so2, no2, co } = dataWithRealtime?.result;
+			// complicate with WeatherOl
+			const realtime = dataWithRealtime?.result?.aqi
+				? dataWithRealtime?.result : dataWithRealtime?.result?.realtime;
+			const { aqi, pm25, pm10, o3, so2, no2, co } = realtime;
 			return { pm25, pm10, o3, so2, no2, co, aqi: {chn: aqi, usa: null} };
 		} else {
 			$.logErr(
@@ -1385,7 +1389,8 @@ function colorfulCloudsToAqiComparison(realtimeAndHourlyData) {
 		: HJ_633.IOS_SCALE.slice(0, HJ_633.IOS_SCALE.indexOf('.'));
 	const todayAqi = airQuality.aqi.usa ?? airQuality.aqi.chn;
 
-	const aqis = realtimeAndHourlyData?.result?.hourly?.air_quality?.aqi;
+	const aqis = realtimeAndHourlyData?.result?.hourly?.air_quality?.aqi
+		?? realtimeAndHourlyData?.result?.hourly?.aqi;
 	// 59 minutes as range
 	const aqi = aqis?.find(aqi => {
 		if (aqi?.datetime) {
