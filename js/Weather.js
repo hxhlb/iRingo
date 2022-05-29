@@ -2160,7 +2160,9 @@ async function outputNextHour(apiVersion, nextHourObject, debugOptions) {
 				const possibleClear = needPossible(chance);
 				timeStatus = [TIME_STATUS.CONSTANT];
 
-				const description = descriptions.find(description => description.parameters === {});
+				const description = descriptions.find(description =>
+					Object.keys(description.parameters).length === 0
+				);
 				condition.longTemplate = description.long;
 				condition.shortTemplate = description.short;
 				condition.parameters = description.parameters;
