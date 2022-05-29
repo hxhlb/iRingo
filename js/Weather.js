@@ -2163,9 +2163,9 @@ async function outputNextHour(apiVersion, nextHourObject, debugOptions) {
 				const description = descriptions.find(description =>
 					Object.keys(description.parameters).length === 0
 				);
-				condition.longTemplate = description.long;
-				condition.shortTemplate = description.short;
-				condition.parameters = description.parameters;
+				condition.longTemplate = description?.long ?? "";
+				condition.shortTemplate = description?.short ?? "";
+				condition.parameters = description?.parameters ?? {};
 
 				condition.token = toToken(possibleClear, weatherStatus, timeStatus);
 
@@ -2192,12 +2192,16 @@ async function outputNextHour(apiVersion, nextHourObject, debugOptions) {
 					}
 					return true;
 				});
-				condition.longTemplate = description.long;
-				condition.shortTemplate = description.short;
+				condition.longTemplate = description?.long ?? "";
+				condition.shortTemplate = description?.short ?? "";
 
-				// time provided by nextHourObject is relative of startTimestamp
-				for (const [key, value] of Object.entries(description.parameters)) {
-					condition.parameters[key] = convertTime(apiVersion, new Date(startTimestamp), value);
+				if (description?.parameters) {
+					// time provided by nextHourObject is relative of startTimestamp
+					for (const [key, value] of Object.entries(description.parameters)) {
+						condition.parameters[key] = convertTime(apiVersion, new Date(startTimestamp), value);
+					}
+				} else {
+					condition.parameters = {};
 				}
 
 				switch (apiVersion) {
