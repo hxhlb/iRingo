@@ -2194,14 +2194,13 @@ async function outputNextHour(apiVersion, nextHourObject, debugOptions) {
 				});
 				condition.longTemplate = description?.long ?? "";
 				condition.shortTemplate = description?.short ?? "";
+				condition.parameters = {};
 
 				if (description?.parameters) {
 					// time provided by nextHourObject is relative of startTimestamp
 					for (const [key, value] of Object.entries(description.parameters)) {
 						condition.parameters[key] = convertTime(apiVersion, new Date(startTimestamp), value);
 					}
-				} else {
-					condition.parameters = {};
 				}
 
 				switch (apiVersion) {
