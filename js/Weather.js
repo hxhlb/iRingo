@@ -9,7 +9,7 @@ const DataBase = {
 		"Settings":{"Switch":true,"CountryCode":"US","Config":{"GEOAddressCorrection":true,"LookupMaxParametersCount":true,"LocalitiesAndLandmarks":true,"PedestrianAR":true,"6694982d2b14e95815e44e970235e230":true,"OpticalHeading":true,"UseCLPedestrianMapMatchedLocations":true}}
 	},
 	"Weather":{
-		"Settings":{"Switch":true,"NextHour":{"Switch":true,"Source":"www.weatherol.cn",},"AQI":{"Switch":true,"Targets":["HJ6332012"],"Local":{"Switch":true,"Standard":"WAQI_InstantCast"},"Source":"WAQI Public","Comparison":{"Switch":true,"Source":"Local"}},"Map":{"AQI":false},"HTTPHeaders":{"Content-Type":"application/x-www-form-urlencoded","User-Agent":"Mozilla/5.0 (iPhone; CPU iPhone OS 15_1_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.1 Mobile/15E148 Safari/604.1"},"ColorfulClouds":{"Token":null},"WAQI":{"Token":null,"Mode":"Coordinate"}},
+		"Settings":{"Switch":true,"NextHour":{"Switch":true,"Source":"www.weatherol.cn",},"AQI":{"Switch":true,"Targets":["HJ6332012"],"Local":{"Switch":true,"Standard":"WAQI_InstantCast"},"Source":"WAQI Public","Comparison":{"Switch":true,"Source":"Local"}},"Map":{"AQI":false},"HTTPHeaders":{"Content-Type":"application/x-www-form-urlencoded","User-Agent":"Mozilla/5.0 (iPhone; CPU iPhone OS 15_1_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.1 Mobile/15E148 Safari/604.1"},"ColorfulClouds":{"Token":null,"AQI":{"CN":true,"Comparison":{"CN":false}}},"WAQI":{"Token":null,"Mode":"Coordinate"}},
 		"Configs":{"Pollutants":{"co":"CO","no":"NO","no2":"NO2","so2":"SO2","o3":"OZONE","nox":"NOX","pm25":"PM2.5","pm10":"PM10","other":"OTHER"}}
 	},
 	"Siri":{
@@ -471,7 +471,9 @@ const AQI_PROVIDERS = [
 
 						if (missions.includes(MISSION_TYPES.AQI)) {
 							const weatherData = await weatherOl(Settings.HTTPHeaders, TYPES.REALTIME, coordinate);
-							airQualityObject = colorfulCloudsToAqi(providerName, weatherData, "https://www.weatherol.cn/air.html");
+							airQualityObject = colorfulCloudsToAqi(
+								providerName, weatherData, false, false, "https://www.weatherol.cn/air.html",
+							);
 						}
 
 						if (missions.includes(MISSION_TYPES.NEXT_HOUR)) {
@@ -563,7 +565,10 @@ const AQI_PROVIDERS = [
 							);
 
 							if (missions.includes(MISSION_TYPES.AQI)) {
-								airQualityObject = colorfulCloudsToAqi(providerName, weatherData, "https://caiyunai.com/weather/");
+								airQualityObject = colorfulCloudsToAqi(
+									providerName, weatherData, Settings.ColorfulClouds.AQI.CN,
+									Settings.ColorfulClouds.AQI.Comparison.CN, "https://caiyunai.com/weather/",
+								);
 							}
 
 							// colorfulCloudsToAqi() will handle previousDayComparison
@@ -571,7 +576,9 @@ const AQI_PROVIDERS = [
 								missions.includes(MISSION_TYPES.COMPARE_AQI)
 								&& !missions.includes(MISSION_TYPES.AQI)
 							) {
-								aqiComparison = colorfulCloudsToAqiComparison(weatherData);
+								aqiComparison = colorfulCloudsToAqiComparison(
+									weatherData, Settings.ColorfulClouds.AQI.Comparison.CN,
+								);
 							}
 
 							if (missions.includes(MISSION_TYPES.NEXT_HOUR)) {
@@ -805,6 +812,8 @@ async function getENV(t,e,n){let i=$.getjson(t,n),s=i?.[e]?.Settings||n?.[e]?.Se
 	Settings.AQI.Comparison.Switch = JSON.parse(Settings.AQI.Comparison.Switch); // BoxJs字符串转Boolean
 	Settings.Map.AQI = JSON.parse(Settings.Map.AQI); // BoxJs字符串转Boolean
 	Settings.HTTPHeaders = JSON.parse(Settings.HTTPHeaders); // BoxJs字符串转Object
+	Settings.ColorfulClouds.AQI.CN = JSON.parse(Settings.ColorfulClouds.AQI.CN); // BoxJs字符串转Boolean
+	Settings.ColorfulClouds.AQI.Comparison.CN = JSON.parse(Settings.ColorfulClouds.AQI.Comparison.CN); // BoxJs字符串转Boolean
 	$.log(`🎉 ${$.name}, Set Environment Variables`, `Settings: ${typeof Settings}`, `Settings内容: ${JSON.stringify(Settings)}`, "");
 	return { Settings, Caches, Configs }
 };
@@ -1254,12 +1263,14 @@ function getCcAirQuality(dataWithRealtime) {
 	}
 }
 
-function colorfulCloudsToAqi(providerName, realtimeAndHourlyData, url) {
+function colorfulCloudsToAqi(
+	providerName, realtimeAndHourlyData, aqiForceChn, comparisonForceChn, url
+) {
 	const airQuality = getCcAirQuality(realtimeAndHourlyData);
 
 	// TODO
-	function getCcStandard(airQuality) {
-		return !airQuality.aqi.usa ? {
+	function getCcStandard(airQuality, forceChn) {
+		return !airQuality.aqi.usa || forceChn ? {
 			...HJ_633,
 			CONCENTRATION_BREAKPOINTS: {
 				...HJ_633.CONCENTRATION_BREAKPOINTS,
@@ -1320,12 +1331,12 @@ function colorfulCloudsToAqi(providerName, realtimeAndHourlyData, url) {
 	// TODO
 	const providerLogo = null;
 	const sourceType = "station";
-	const standard = getCcStandard(airQuality);
+	const standard = getCcStandard(airQuality, aqiForceChn);
 	const scale = standard.IOS_SCALE;
-	const aqi = airQuality.aqi.usa ?? airQuality.aqi.chn;
+	const aqi = scale === EPA_454.IOS_SCALE ? airQuality.aqi.usa : airQuality.aqi.chn;
 	const categoryIndex = toAqiLevel(standard.AQI_RANGES, standard.AQI_LEVELS, aqi);
 	const isSignificant = categoryIndex >= standard.SIGNIFICANT_LEVEL;
-	const previousDayComparison = colorfulCloudsToAqiComparison(realtimeAndHourlyData);
+	const previousDayComparison = colorfulCloudsToAqiComparison(realtimeAndHourlyData, comparisonForceChn);
 	const pollutants = getCcPollutants(airQuality);
 	const primaryPollutant = pollutantsToAqis(
 		standard.AQI_RANGES,
@@ -1384,7 +1395,7 @@ function waqiToAqi(feedData) {
 	);
 };
 
-function colorfulCloudsToAqiComparison(realtimeAndHourlyData) {
+function colorfulCloudsToAqiComparison(realtimeAndHourlyData, forceChn) {
 	const airQuality = getCcAirQuality(realtimeAndHourlyData);
 
 	const serverTime = parseInt(realtimeAndHourlyData?.server_time);
@@ -1392,10 +1403,11 @@ function colorfulCloudsToAqiComparison(realtimeAndHourlyData) {
 	const reportedTimestamp = (new Date(serverTimestamp)).setMinutes(0, 0, 0);
 	const yesterdayTimestamp = reportedTimestamp - 1000 * 60 * 60 * 24;
 
-	const todayStandardName = airQuality.aqi.usa
-		? EPA_454.IOS_SCALE.slice(0, EPA_454.IOS_SCALE.indexOf('.'))
-		: HJ_633.IOS_SCALE.slice(0, HJ_633.IOS_SCALE.indexOf('.'));
-	const todayAqi = airQuality.aqi.usa ?? airQuality.aqi.chn;
+	const EPA_NOW_CAST = EPA_454.IOS_SCALE.slice(0, EPA_454.IOS_SCALE.indexOf('.'));
+	const HJ_633_2012 = HJ_633.IOS_SCALE.slice(0, HJ_633.IOS_SCALE.indexOf('.'));
+
+	const todayStandardName = airQuality.aqi.usa && !forceChn ? EPA_NOW_CAST : HJ_633_2012;
+	const todayAqi = todayStandardName === EPA_NOW_CAST ? airQuality.aqi.usa : airQuality.aqi.chn;
 
 	const aqis = realtimeAndHourlyData?.result?.hourly?.air_quality?.aqi
 		?? realtimeAndHourlyData?.result?.hourly?.aqi;
@@ -1408,14 +1420,12 @@ function colorfulCloudsToAqiComparison(realtimeAndHourlyData) {
 
 		return false;
 	});
-	const yesterdayStandardName = aqi?.value?.usa
-		? EPA_454.IOS_SCALE.slice(0, EPA_454.IOS_SCALE.indexOf('.'))
-		: HJ_633.IOS_SCALE.slice(0, HJ_633.IOS_SCALE.indexOf('.'));
-	const yesterdayAqi = aqi?.value?.usa ?? aqi?.value;
+	const yesterdayStandardName = aqi?.value?.usa && !forceChn ? EPA_NOW_CAST : HJ_633_2012;
+	const yesterdayAqi = yesterdayStandardName === EPA_NOW_CAST ? aqi?.value?.usa : aqi?.value;
 
 	if (todayStandardName !== yesterdayStandardName) {
 		$.log(
-			`⚠ ${$.name}, AQI标准不同，放弃比较。 ${colorfulCloudsToAqiComparison.name}：`,
+			`⚠ ${$.name}, ${colorfulCloudsToAqiComparison.name}：AQI标准不同或未找到数据，放弃比较。`,
 			`昨日AQI标准为${yesterdayStandardName}，今日AQI标准为${todayStandardName}`, "",
 		);
 		return AQI_COMPARISON.UNKNOWN;
