@@ -1608,7 +1608,7 @@ function colorfulCloudsToNextHour(providerName, weatherType, dataWithMinutely) {
 	}
 
 	// extract minute times that helpful for Apple to use cache data
-	function toDescriptions(isClear, forecastKeypoint, minutelyDescription, language) {
+	function toDescriptions(isClear, forecastKeypoint, minutelyDescription, placeHolder, language) {
 		const WORDS = {
 			// words that used to insert into description
 			AFTER: {
@@ -1736,7 +1736,7 @@ function colorfulCloudsToNextHour(providerName, weatherType, dataWithMinutely) {
 
 				descriptions.push({
 					// no suitable description, empty string instead
-					long: splitIndex !== 0 ? longDescription.slice(splitIndex) : "",
+					long: splitIndex !== 0 ? longDescription.slice(splitIndex) : placeHolder,
 					short: forecastKeypoint ?? minutelyDescription,
 					parameters: {},
 				});
@@ -1786,6 +1786,7 @@ function colorfulCloudsToNextHour(providerName, weatherType, dataWithMinutely) {
 			!(Math.max(...precipitationTwoHr.slice(0, 59) ?? [0]) >= precipStandard.NO.UPPER),
 			forecastKeypoint,
 			minutelyDescription,
+			providerName,
 			ccLanguage,
 		),
 	);
@@ -2154,6 +2155,7 @@ async function outputNextHour(apiVersion, nextHourObject, debugOptions) {
 				condition.startTime = convertTime(apiVersion, new Date(startTimestamp), lastBoundIndex);
 			}
 
+			const PLACE_HOLDER = "iRingo";
 			if (boundIndex === -1) {
 				// cannot find the next bound
 				const chance = Math.max(...minutesForConditions.map(minute => minute.chance));
@@ -2163,8 +2165,8 @@ async function outputNextHour(apiVersion, nextHourObject, debugOptions) {
 				const description = descriptions.find(description =>
 					Object.keys(description.parameters).length === 0
 				);
-				condition.longTemplate = description?.long ?? "";
-				condition.shortTemplate = description?.short ?? "";
+				condition.longTemplate = description?.long ?? PLACE_HOLDER;
+				condition.shortTemplate = description?.short ?? PLACE_HOLDER;
 				condition.parameters = description?.parameters ?? {};
 
 				condition.token = toToken(possibleClear, weatherStatus, timeStatus);
@@ -2192,8 +2194,8 @@ async function outputNextHour(apiVersion, nextHourObject, debugOptions) {
 					}
 					return true;
 				});
-				condition.longTemplate = description?.long ?? "";
-				condition.shortTemplate = description?.short ?? "";
+				condition.longTemplate = description?.long ?? PLACE_HOLDER;
+				condition.shortTemplate = description?.short ?? PLACE_HOLDER;
 				condition.parameters = {};
 
 				if (description?.parameters) {
