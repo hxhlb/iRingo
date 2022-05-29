@@ -1482,26 +1482,9 @@ function getCcWeatherType(serverTimeString, skycons) {
  */
 function colorfulCloudsToNextHour(providerName, weatherType, dataWithMinutely) {
 	const SUPPORTED_APIS = [ 2 ];
-	// words that used to insert into description
-	const AFTER = {
-		"zh_CN": "再过",
-		"zh_TW": "再過",
-		"ja": "その後",
-		"en_US": "after that",
-		// ColorfulClouds seems not prefer to display multiple times in en_GB
-		"en_GB": "after that",
-	};
-	// splitors for description
-	const SPLITORS = {
-		"en_US": ["but ", "and "],
-		"en_GB": ["but ", "and "],
-		"zh_CN": ["，"],
-		"zh_TW": ["，"],
-		"ja": ["、"],
-	};
 
 	// version from API is beginning with `v`
-	function getMajorVersion(apiVersion) { return parseInt(apiVersion.slice(1)) };
+	function getMajorVersion(apiVersion) { return parseInt(apiVersion.slice(1)) }
 
 	const apiVersion = dataWithMinutely?.api_version;
 	const majorVersion = getMajorVersion(apiVersion);
@@ -1585,19 +1568,19 @@ function colorfulCloudsToNextHour(providerName, weatherType, dataWithMinutely) {
 
 		// detect weather change by description
 		// ignore clear
-		if (Math.max(...precipitations) >= standard.NO.UPPER) {
-			const times = minutelyDescription?.match(/\d+/g);
-			times?.forEach(timeInString => {
-				const time = parseInt(timeInString);
-
-				if (!isNaN(time) && !(bounds.includes(time))) {
-					// array start from 0
-					bounds.push(time - 1);
-				}
-			});
-
-			bounds.sort((a, b) => a - b);
-		}
+		// if (Math.max(...precipitations) >= standard.NO.UPPER) {
+		// 	const times = minutelyDescription?.match(/\d+/g);
+		// 	times?.forEach(timeInString => {
+		// 		const time = parseInt(timeInString);
+		//
+		// 		if (!isNaN(time) && !(bounds.includes(time))) {
+		// 			// array start from 0
+		// 			bounds.push(time - 1);
+		// 		}
+		// 	});
+		//
+		// 	bounds.sort((a, b) => a - b);
+		// }
 
 		// initialize minutes
 		const minutes = [];
@@ -1622,82 +1605,92 @@ function colorfulCloudsToNextHour(providerName, weatherType, dataWithMinutely) {
 		});
 
 		return minutes;
-	};
+	}
 
 	// extract minute times that helpful for Apple to use cache data
 	function toDescriptions(isClear, forecastKeypoint, minutelyDescription, language) {
-		let longDescription = minutelyDescription ?? forecastKeypoint;
-		// match all numbers in descriptions to array
-		const parameters = {};
+		const WORDS = {
+			// words that used to insert into description
+			AFTER: {
+				"zh_CN": "再过",
+				"zh_TW": "再過",
+				"ja": "その後",
+				"en_US": "after that",
+				// ColorfulClouds seems not prefer to display multiple times in en_GB
+				"en_GB": "after that",
+			},
+			// splitters for description
+			SPLITTERS: {
+				"en_US": ["but ", "and "],
+				"en_GB": ["but ", "and "],
+				"zh_CN": ["，"],
+				"zh_TW": ["，"],
+				"ja": ["、"],
+			},
+			KM: {
+				"zh_CN": "公里",
+				"zh_TW": "公里",
+				// kilometers
+				"ja": "キロメートル",
+				"en_US": "km",
+				"en_GB": "km",
+			},
+		}
 
-		function getSentenceSplitors(language) {
-			switch (language) {
-				case "en_GB":
-					return SPLITORS.en_GB;
-				case "zh_CN":
-					return SPLITORS.zh_CN;
-				case "zh_TW":
-					return SPLITORS.zh_TW;
-				case "ja":
-					return SPLITORS.ja;
-				case "en_US":
-				default:
-					return SPLITORS.en_US;
-			}
-		};
+		let longDescription = minutelyDescription ?? forecastKeypoint;
 
 		function insertAfterToDescription(language, description) {
 			const FIRST_AT = "{firstAt}";
 			// split into two part at `{firstAt}`
-			const splitedDescriptions = description?.split(FIRST_AT);
+			const splitDescriptions = description?.split(FIRST_AT);
 
 			switch (language) {
 				case "en_GB":
 					// take second part to skip firstAt
 					// append `after that` to description
-					splitedDescriptions[splitedDescriptions.length - 1] =
-						splitedDescriptions[splitedDescriptions.length - 1]
+					splitDescriptions[splitDescriptions.length - 1] =
+						splitDescriptions[splitDescriptions.length - 1]
 							// remove stopping & later
 							// (.*?) will match `*At`
-							.replaceAll("} min later", `{$1} min later ${AFTER.en_GB}`);
+							.replaceAll("} min later", `{$1} min later ${WORDS.AFTER.en_GB}`);
 					break;
 				case "zh_CN":
-					splitedDescriptions[splitedDescriptions.length - 1] =
-						splitedDescriptions[splitedDescriptions.length - 1]
+					splitDescriptions[splitDescriptions.length - 1] =
+						splitDescriptions[splitDescriptions.length - 1]
 							.replaceAll("直到{", '{');
 
-					splitedDescriptions[splitedDescriptions.length - 1] =
-						splitedDescriptions[splitedDescriptions.length - 1]
-							.replaceAll("{", `${AFTER.zh_CN}{`);
+					splitDescriptions[splitDescriptions.length - 1] =
+						splitDescriptions[splitDescriptions.length - 1]
+							.replaceAll("{", `${WORDS.AFTER.zh_CN}{`);
 					break;
 				case "zh_TW":
-					splitedDescriptions[splitedDescriptions.length - 1] =
-						splitedDescriptions[splitedDescriptions.length - 1]
+					splitDescriptions[splitDescriptions.length - 1] =
+						splitDescriptions[splitDescriptions.length - 1]
 							.replaceAll("直到{", '{');
 
-					splitedDescriptions[splitedDescriptions.length - 1] =
-						splitedDescriptions[splitedDescriptions.length - 1]
-							.replaceAll("{", `${AFTER.zh_TW}{`);
+					splitDescriptions[splitDescriptions.length - 1] =
+						splitDescriptions[splitDescriptions.length - 1]
+							.replaceAll("{", `${WORDS.AFTER.zh_TW}{`);
 					break;
 				case "ja":
 					// Japanese support from ColorfulClouds is broken for sometime
 					// https://lolic.at/notice/AJNH316TTSy1fRlOka
 
 					// TODO: I am not familiar for Japanese, contributions welcome
-					splitedDescriptions[splitedDescriptions.length - 1] =
-						splitedDescriptions[splitedDescriptions.length - 1]
-							.replaceAll("{", `${AFTER.ja}{`);
+					splitDescriptions[splitDescriptions.length - 1] =
+						splitDescriptions[splitDescriptions.length - 1]
+							.replaceAll("{", `${WORDS.AFTER.ja}{`);
 					break;
 				case "en_US":
 				default:
-					splitedDescriptions[splitedDescriptions.length - 1] =
-						splitedDescriptions[splitedDescriptions.length - 1]
-							.replaceAll("} min later", `{$1} min later ${AFTER.en_US}`);
+					splitDescriptions[splitDescriptions.length - 1] =
+						splitDescriptions[splitDescriptions.length - 1]
+							.replaceAll("} min later", `{$1} min later ${WORDS.AFTER.en_US}`);
 					break;
 			}
 
-			return splitedDescriptions.join(FIRST_AT);
-		};
+			return splitDescriptions.join(FIRST_AT);
+		}
 
 		// https://stackoverflow.com/a/20426113
 		// transfer numbers into ordinal numerals
@@ -1712,35 +1705,40 @@ function colorfulCloudsToNextHour(providerName, weatherType, dataWithMinutely) {
 			if (n < 20) return special[n];
 			if (n % 10 === 0) return deca[Math.floor(n / 10) - 2] + 'ieth';
 			return deca[Math.floor(n / 10) - 2] + 'y-' + special[n % 10];
-		};
+		}
 
 		const descriptions = [];
 		descriptions.push({
 			long: longDescription,
 			short: forecastKeypoint ?? minutelyDescription,
-			parameters,
+			parameters: {},
 		});
 
-		if (!isClear) {
+		// sometimes ColorfulClouds will say no rain
+		if (!isClear && !longDescription.includes(WORDS.KM[language])) {
 			// split sentence by time
 			const allTimes = longDescription?.match(/\d+/g);
 			allTimes?.forEach(timeInString => {
+				// search splitter after this time
 				const startIndex = longDescription.indexOf(timeInString) + timeInString.length;
-				const splitors = getSentenceSplitors(language);
+				const splitters = WORDS.SPLITTERS[language];
 
 				let splitIndex = 0;
-				for (const splitor of splitors) {
-					const index = longDescription.indexOf(splitor, startIndex) + splitor.length;
+				for (const splitter of splitters) {
+					const splitterIndex = longDescription.indexOf(splitter, startIndex);
+					const index = splitterIndex + splitter.length;
 
-					if (index !== -1 && (splitIndex === 0 || index < splitIndex)) {
+					// when there is an index and split index is initialize value or this splitter is front
+					if (splitterIndex !== -1 && (splitIndex === 0 || index < splitIndex)) {
 						splitIndex = index;
 					}
 				}
 
 				descriptions.push({
-					long: longDescription.slice(splitIndex),
+					// no suitable description, empty string instead
+					long: splitIndex !== 0 ? longDescription.slice(splitIndex) : "",
 					short: forecastKeypoint ?? minutelyDescription,
-					parameters,
+					parameters: {},
 				});
 			});
 
@@ -1764,7 +1762,7 @@ function colorfulCloudsToNextHour(providerName, weatherType, dataWithMinutely) {
 		}
 
 		return descriptions;
-	};
+	}
 
 	return toNextHourObject(
 		(+ new Date()),
@@ -1791,7 +1789,7 @@ function colorfulCloudsToNextHour(providerName, weatherType, dataWithMinutely) {
 			ccLanguage,
 		),
 	);
-};
+}
 
 /**
  * Produce a object for `outputAQI()`
@@ -2151,34 +2149,21 @@ async function outputNextHour(apiVersion, nextHourObject, debugOptions) {
 				.findIndex(minute => minute.weatherStatus !== lastWeather);
 
 			let timeStatus = [TIME_STATUS.START];
-			// set descriptions as more as possible
-			const descriptionsIndex = index < descriptions.length ? index : descriptions.length - 1;
-			const condition = {
-				longTemplate: descriptions[descriptionsIndex].long,
-				shortTemplate: descriptions[descriptionsIndex].short,
-				parameters: {},
-			};
+			const condition = {};
 			if (apiVersion !== "v1") {
 				condition.startTime = convertTime(apiVersion, new Date(startTimestamp), lastBoundIndex);
 			}
-			// time provided by nextHourObject is relative of startTimestamp
-			for (const [key, value] of Object.entries(descriptions[descriptionsIndex].parameters)) {
-				// $.log(
-				// 	`🚧 ${$.name}, `,
-				// 	`descriptions[${descriptionsIndex}].parameters.${key} = ${value}, `,
-				// 	`startTimestamp = ${startTimestamp}, `,
-				// 	`new Date(startTimestamp) = ${new Date(startTimestamp)}`, ""
-				// );
-
-				condition.parameters[key] = convertTime(apiVersion, new Date(startTimestamp), value);
-			};
 
 			if (boundIndex === -1) {
 				// cannot find the next bound
 				const chance = Math.max(...minutesForConditions.map(minute => minute.chance));
-				// $.log(`🚧 ${$.name}, max chance = ${chance}`, '');
 				const possibleClear = needPossible(chance);
 				timeStatus = [TIME_STATUS.CONSTANT];
+
+				const description = descriptions.find(description => description.parameters === {});
+				condition.longTemplate = description.long;
+				condition.shortTemplate = description.short;
+				condition.parameters = description.parameters;
 
 				condition.token = toToken(possibleClear, weatherStatus, timeStatus);
 
@@ -2196,6 +2181,22 @@ async function outputNextHour(apiVersion, nextHourObject, debugOptions) {
 				const currentWeather = minutesForConditions[boundIndex].weatherStatus;
 				const endTime =
 					convertTime(apiVersion, new Date(startTimestamp), lastBoundIndex + boundIndex);
+
+				const description = descriptions.find(description => {
+					for (const parameter of Object.values(description.parameters)) {
+						if (parameter < lastBoundIndex + boundIndex) {
+							return false;
+						}
+					}
+					return true;
+				});
+				condition.longTemplate = description.long;
+				condition.shortTemplate = description.short;
+
+				// time provided by nextHourObject is relative of startTimestamp
+				for (const [key, value] of Object.entries(description.parameters)) {
+					condition.parameters[key] = convertTime(apiVersion, new Date(startTimestamp), value);
+				}
 
 				switch (apiVersion) {
 					case "v1":
@@ -2256,7 +2257,7 @@ async function outputNextHour(apiVersion, nextHourObject, debugOptions) {
 		conditions.shift();
 		$.log(`🚧 ${$.name}, conditions = ${JSON.stringify(conditions)}`, '');
 		return conditions;
-	};
+	}
 
 	function getSummaries(apiVersion, minutesData, startTimestamp) {
 		$.log(`🚧 ${$.name}, 开始设置summary`, "");
