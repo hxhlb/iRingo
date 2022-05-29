@@ -306,6 +306,20 @@
 					"desc": "彩云天气API令牌。"
 				},
 				{
+					"id": "@iRingo.Weather.Settings.ColorfulClouds.AQI.CN",
+					"name": "彩云天气AQI使用国标",
+					"val": true,
+					"type": "boolean",
+					"desc": "配合本地转换使用，可使彩云天气的AQI数据经本地转换。"
+				},
+				{
+					"id": "@iRingo.Weather.Settings.ColorfulClouds.AQI.Comparison.CN",
+					"name": "彩云天气AQI对比使用国标",
+					"val": false,
+					"type": "boolean",
+					"desc": "在对比昨日数据时使用国标AQI。"
+				},
+				{
 					"id": "@iRingo.Weather.Settings.WAQI.Token",
 					"name": "WAQI token",
 					"val": "",
