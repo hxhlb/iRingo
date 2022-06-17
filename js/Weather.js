@@ -219,7 +219,7 @@ const WEATHER_STATUS = {
  * @return {Promise<*>}
  */
 async function getParams(path) {
-	const Regular = /^(?<ver>v1|v2)\/weather\/(?<language>[\w-_]+)\/(?<lat>-?\d+\.\d+)\/(?<lng>-?\d+\.\d+).*(?<countryCode>country=[A-Z]{2})?.*/i;
+	const Regular = /^(?<ver>v1|v2|v3)\/weather\/(?<language>[\w-_]+)\/(?<lat>-?\d+\.\d+)\/(?<lng>-?\d+\.\d+).*(?<countryCode>country=[A-Z]{2})?.*/i;
 	const Params = path.match(Regular).groups;
 	// TODO: add debug switch (lat, lng)
 	$.log(`🚧 ${$.name}`, `Params: ${JSON.stringify(Params)}`, "");
@@ -269,7 +269,7 @@ async function WAQI(type = "", input = {}) {
 		if (type == "Nearest") {
 			$.log('获取最近站点');
 			if (input.api == "v1") mapq = "mapq";
-			else if (input.api == "v2") mapq = "mapq2";
+			else if (input.api == "v2" || input.api == "v3") mapq = "mapq2";
 			request.url = `${request.url}/${mapq}/nearest?n=1&geo=1/${input.lat}/${input.lng}`;
 		} else if (type == "Token") {
 			$.log('获取令牌');
@@ -986,7 +986,7 @@ async function outputAQI(apiVersion, now, obs, weather, Settings) {
 			weather[NAME].airQualityIndex = obs?.aqi ?? now?.aqi ?? now?.v;
 			weather[NAME].airQualityScale = Settings?.AQI?.Scale || "EPA_NowCast.2201";
 			weather[NAME].airQualityCategoryIndex = calculateAQI(obs?.aqi ?? now?.aqi ?? now?.v);
-		} else if (apiVersion == "v2") {
+		} else if (apiVersion == "v2" || apiVersion == "v3") {
 			weather[NAME].index = obs?.aqi ?? now?.aqi ?? now?.v;
 			weather[NAME].scale = Settings?.AQI?.Scale || "EPA_NowCast.2201";
 			weather[NAME].categoryIndex = calculateAQI(obs?.aqi ?? now?.aqi ?? now?.v);
@@ -1234,6 +1234,7 @@ async function outputNextHour(apiVersion, nextHourObject, debugOptions) {
 						condition.validUntil = endTime;
 						break;
 					case "v2":
+					case "v3":
 					default:
 						condition.endTime = endTime;
 						break;
@@ -1330,6 +1331,7 @@ async function outputNextHour(apiVersion, nextHourObject, debugOptions) {
 						summary.minIntensity = Math.min(...precipitations);
 						break;
 					case "v2":
+					case "v3":
 					default:
 						summary.precipChance = chance;
 						summary.precipIntensity = Math.max(...precipitations);
@@ -1350,6 +1352,7 @@ async function outputNextHour(apiVersion, nextHourObject, debugOptions) {
 					case "v1":
 						summary.validUntil = endTime;
 					case "v2":
+					case "v3":
 						summary.endTime = endTime;
 				}
 
