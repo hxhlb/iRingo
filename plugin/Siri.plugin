@@ -3,28 +3,28 @@
 #!openUrl=http://boxjs.com/#/app/iRingo.Siri
 #!author=VirgilClyne
 #!homepage=https://github.com/VirgilClyne
-#!manual=https://github.com/VirgilClyne/iRingo#siri与搜索
+#!manual=https://github.com/VirgilClyne//iRingo/wiki/🔍Siri与搜索
 #!icon=https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Siri.png
 
 [Rule]
 # > Look Up (Only for Wikipedia@macOS, TUN Mode enabled required)
-PROCESS-NAME,LookupViewService
-PROCESS-NAME,/System/Library/PrivateFrameworks/Lookup.framework/Versions/A/XPCServices/LookupViewService.xpc/Contents/MacOS/LookupViewService
-DOMAIN,lookup-api.apple.com
-DOMAIN,lookup-api.apple.com.edgekey.net
-DOMAIN,e16991.b.akamaiedge.net
+PROCESS-NAME,LookupViewService,PROXY
+PROCESS-NAME,/System/Library/PrivateFrameworks/Lookup.framework/Versions/A/XPCServices/LookupViewService.xpc/Contents/MacOS/LookupViewService,PROXY
+DOMAIN,lookup-api.apple.com,PROXY
+DOMAIN,lookup-api.apple.com.edgekey.net,PROXY
+DOMAIN,e16991.b.akamaiedge.net,PROXY
 
 [Script]
 # Redirect Siri Suggestions Service 
 # Bag (iOS/macOS)
-http-request ^https?:\/\/api.*\.smoot\.apple\.(com|cn)\/bag\?(.*) script-path=https://raw.githubusercontent.com/VirgilClyne/iRingo/main/js/Siri.request.js, timeout=5, tag=Siri Suggestions Service
-http-response ^https?:\/\/api.*\.smoot\.apple\.(com|cn)\/bag\?(.*) script-path=https://raw.githubusercontent.com/VirgilClyne/iRingo/main/js/Siri.response.js, requires-body=1, timeout=10, tag=Siri Suggestions Service
+http-request ^https?:\/\/api(.*)\.smoot\.apple\.(com|cn)\/bag(\?.*)? script-path=https://raw.githubusercontent.com/VirgilClyne/iRingo/main/js/Siri.request.js, timeout=5, tag=Siri Suggestions Service
+http-response ^https?:\/\/api(.*)\.smoot\.apple\.(com|cn)\/bag(\?.*)? script-path=https://raw.githubusercontent.com/VirgilClyne/iRingo/main/js/Siri.response.js, requires-body=1, timeout=10, tag=Siri Suggestions Service
 # Spotlight & Look Up Search (iOS/macOS)
-http-request ^https?:\/\/api.*\.smoot\.apple\.(com|cn)\/search\?(.*) script-path=https://raw.githubusercontent.com/VirgilClyne/iRingo/main/js/Siri.request.js, timeout=5, tag=Spotlight & Look Up Search
-http-response ^https?:\/\/api.*\.smoot\.apple\.(com|cn)\/search\?(.*) script-path=https://raw.githubusercontent.com/VirgilClyne/iRingo/main/js/Siri.response.js, requires-body=1, timeout=10, tag=Spotlight & Look Up Search
+http-request ^https?:\/\/api(.*)\.smoot\.apple\.(com|cn)\/search(\?.*)? script-path=https://raw.githubusercontent.com/VirgilClyne/iRingo/main/js/Siri.request.js, timeout=5, tag=Spotlight & Look Up Search
+http-response ^https?:\/\/api(.*)\.smoot\.apple\.(com|cn)\/search(\?.*)? script-path=https://raw.githubusercontent.com/VirgilClyne/iRingo/main/js/Siri.response.js, requires-body=1, timeout=10, tag=Spotlight & Look Up Search
 # Siri Infomation Card (macOS)
-http-request ^https?:\/\/api.*\.smoot\.apple\.(com|cn)\/card\?(.*) script-path=https://raw.githubusercontent.com/VirgilClyne/iRingo/main/js/Siri.request.js, timeout=5, tag=Siri Infomation Card
-http-response ^https?:\/\/api.*\.smoot\.apple\.(com|cn)\/card\?(.*) script-path=https://raw.githubusercontent.com/VirgilClyne/iRingo/main/js/Siri.response.js, requires-body=1, timeout=10, tag=Siri Infomation Card
+http-request ^https?:\/\/api(.*)\.smoot\.apple\.(com|cn)\/card(\?.*)? script-path=https://raw.githubusercontent.com/VirgilClyne/iRingo/main/js/Siri.request.js, timeout=5, tag=Siri Infomation Card
+http-response ^https?:\/\/api(.*)\.smoot\.apple\.(com|cn)\/card(\?.*)? script-path=https://raw.githubusercontent.com/VirgilClyne/iRingo/main/js/Siri.response.js, requires-body=1, timeout=10, tag=Siri Infomation Card
 
 [MITM]
 hostname = api*.smoot.apple.com, api*.smoot.apple.cn
