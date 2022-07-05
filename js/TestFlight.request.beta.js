@@ -1,7 +1,7 @@
 /*
 README:https://github.com/VirgilClyne/iRingo
 */
-const $ = new Env("TestFlight v1.3.6-request-beta");
+const $ = new Env("TestFlight v1.3.12-request-beta");
 const URL = new URLs();
 const DataBase = {
 	"Location":{
@@ -25,7 +25,7 @@ const DataBase = {
 		"Settings":{"Switch":true,"CountryCode":"US","newsPlusUser":true}
 	},
 	"TestFlight":{
-		"Settings":{"Switch":true,"CountryCode":"US","storeCookies":false,"Rosetta":true}
+		"Settings":{"Switch":true,"CountryCode":"US","MultiAccount":false,"Universal":true}
 	},
 	"Default": {
 		"Settings":{"Switch":true},
@@ -43,11 +43,12 @@ const DataBase = {
 		$.log(`⚠ ${$.name}, url.path=${url.path}`);
 		switch (url.path) {
 			case "v1/properties/testflight":
-				$request.headers["X-Apple-Rosetta-Available"] = Settings.Rosetta;
+				//$request.headers["X-Apple-Rosetta-Available"] = Settings.Rosetta;
 				break;
 			case "v1/session/authenticate":
 				let authenticate = JSON.parse($request.body);
-				if (Settings.storeCookies) { // 保存Cookies
+				/*
+				if (Settings.storeCookies) { // 使用Cookies
 					$.log(`🚧 ${$.name}, storeCookies`, "");
 					if (Caches?.dsId && Caches?.storeCookies) { // 有 DS ID和iTunes Store Cookie
 						$.log(`🚧 ${$.name}, 有Caches, DS ID和iTunes Store Cookie`, "");
@@ -61,6 +62,7 @@ const DataBase = {
 						} else $.setjson({ ...Caches, ...authenticate }, "@iRingo.TestFlight.Caches"); // DS ID相等，刷新缓存
 					} else $.setjson({ ...Caches, ...authenticate }, "@iRingo.TestFlight.Caches"); // Caches空
 				}
+				*/
 				if (Settings.CountryCode !== "AUTO") authenticate.storeFrontIdentifier = authenticate.storeFrontIdentifier.replace(/\d{6}/, Configs.Storefront[Settings.CountryCode]);
 				$request.body = JSON.stringify(authenticate);
 				break;
@@ -70,33 +72,68 @@ const DataBase = {
 			case "v1/devices/remove":
 				break;
 			default:
-				if (/\/apps$/i.test(url.path)) $.log(`🚧 ${$.name}, /app`, "");
-				else if (/\/apps\/\d+\/builds\/\d+$/i.test(url.path)) $.log(`🚧 ${$.name}, /app/bulids`, "");
-				else if (/\/apps\/\d+\/builds\/\d+\/install$/i.test(url.path)) {
-					$.log(`🚧 ${$.name}, /app/bulids/install`, "");
-					let install = JSON.parse($request.body);
-					if (Settings.CountryCode !== "AUTO") install.storefrontId = install.storefrontId.replace(/\d{6}/, Configs.Storefront[Settings.CountryCode]);
-					$request.body = JSON.stringify(install);
-				} else $.log(`🚧 ${$.name}, unknown`, "");
+				// headers auth mod
+				if (Settings.MultiAccount) { // MultiAccount
+					$.log(`🚧 ${$.name}, 启用多账号支持`, "");
+					if (Caches?.data) { // Caches.data存在`
+						$.log(`🚧 ${$.name}, data存在`, "");
+						if (url.path.includes(Caches?.data?.accountId)) { // "accountId"相同
+							$.log(`🚧 ${$.name}, "accountId"相同，更新`, "");
+							let newCaches = Caches;
+							newCaches.data["X-Request-Id"] = $request.headers["X-Request-Id"];
+							newCaches.data.sessionId = $request.headers["X-Session-Id"];
+							newCaches.data["X-Session-Digest"] = $request.headers["X-Session-Digest"];
+							$.setjson({ ...Caches, ...newCaches }, "@iRingo.TestFlight.Caches");
+						} else { // "accountId"不同
+							$.log(`🚧 ${$.name}, "accountId"不同，替换`, "");
+							url.path = url.path.replace(/\/[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}\//i, `/${Caches.data.accountId}/`);
+							if ($request?.headers?.["If-None-Match"]) $request.headers["If-None-Match"] = `\"${$request.headers["If-None-Match"].replace(/\"/g, "")}_\"`
+							$request.headers["X-Request-Id"] = Caches.data["X-Request-Id"];
+							$request.headers["X-Session-Id"] = Caches.data.sessionId;
+							$request.headers["X-Session-Digest"] = Caches.data["X-Session-Digest"];
+						}
+					} else { // Caches空
+						$.log(`🚧 ${$.name}, Caches空，写入`, "");
+						let newCaches = {
+							"data": {
+								"accountId": url.path.match(/[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}/i)?.[0],
+								"X-Request-Id": $request.headers["X-Request-Id"],
+								"sessionId": $request.headers["X-Session-Id"],
+								"X-Session-Digest": $request.headers["X-Session-Digest"]
+							}
+						};
+						$.setjson({ ...Caches, ...newCaches }, "@iRingo.TestFlight.Caches");
+					}
+				};
+				if (/\/accounts\//i.test(url.path)) {
+					$.log(`🚧 ${$.name}, accounts`, "");
+					// app info mod
+					if (/\/apps/i.test(url.path)) {
+						$.log(`🚧 ${$.name}, /apps`, "");
+						if (/\/apps$/i.test(url.path)) {
+							$.log(`🚧 ${$.name}, /apps`, "");
+						} else if (/\/apps\/\d+\/builds\/\d+$/i.test(url.path)) {
+							$.log(`🚧 ${$.name}, /app/bulids`, "");
+						} else if (/\/apps\/\d+\/platforms\/\w+\/trains$/i.test(url.path)) {
+							$.log(`🚧 ${$.name}, /app/platforms/trains`, "");
+						} else if (/\/apps\/\d+\/platforms\/\w+\/trains\/[\d.]+\/builds$/i.test(url.path)) {
+							$.log(`🚧 ${$.name}, /app/platforms/trains/builds`, "");
+						} else if (/\/apps\/\d+\/builds\/\d+\/install$/i.test(url.path)) {
+							$.log(`🚧 ${$.name}, /app/bulids/install`, "");
+							let install = JSON.parse($request.body);
+							if (Settings.CountryCode !== "AUTO") install.storefrontId = install.storefrontId.replace(/\d{6}/, Configs.Storefront[Settings.CountryCode]);
+							$request.body = JSON.stringify(install);
+						} else $.log(`🚧 ${$.name}, unknown`, "");
+					};
+				} else if (/\/invites\//i.test(url.path)) {
+					$.log(`🚧 ${$.name}, invites`, "");
+					if (/\/app$/i.test(url.path)) {
+						$.log(`🚧 ${$.name}, /app`, "");
+					} else if (/\/accept$/i.test(url.path)) {
+						$.log(`🚧 ${$.name}, /accept`, "");
+					} else $.log(`🚧 ${$.name}, unknown`, "");
+				};
 				break;
-		};
-
-		if (Settings.storeCookies) { // 保存Cookies
-			$.log(`🚧 ${$.name}, storeCookies`, "");
-			if (Object.keys(Caches).length !== 0) { // Caches非空
-				$.log(`🚧 ${$.name}, Caches非空`, "");
-				if (Caches?.data) { // authenticate.data存在`
-					$.log(`🚧 ${$.name}, data存在`, "");
-					if (/\/[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}\//i.test(url.path)) {// UUID 存在
-						$.log(`🚧 ${$.name}, UUID 存在`, "");
-						url.path = url.path.replace(/\/[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}\//, `/${Caches.data.accountId}/`);
-					}
-					if ($request?.headers?.["X-Session-Id"]) {// "X-Session-Id"存在
-						$.log(`🚧 ${$.name}, "X-Session-Id"存在`, "");
-						$request.headers["X-Session-Id"] = Caches.data.sessionId;
-					}
-				}
-			};
 		};
 		$request.url = URL.stringify(url);
 	}
@@ -132,8 +169,8 @@ async function setENV(name, platform, database) {
 	let { Settings, Caches = {}, Configs } = await getENV(name, platform, database);
 	/***************** Prase *****************/
 	Settings.Switch = JSON.parse(Settings.Switch) // BoxJs字符串转Boolean
-	Settings.storeCookies = JSON.parse(Settings.storeCookies) // BoxJs字符串转Boolean
-	Settings.Rosetta = JSON.parse(Settings.Rosetta) // BoxJs字符串转Boolean
+	Settings.MultiAccount = JSON.parse(Settings.MultiAccount) // BoxJs字符串转Boolean
+	Settings.Universal = JSON.parse(Settings.Universal) // BoxJs字符串转Boolean
 	$.log(`🎉 ${$.name}, Set Environment Variables`, `Settings: ${typeof Settings}`, `Settings内容: ${JSON.stringify(Settings)}`, "");
 	return { Settings, Caches, Configs }
 };

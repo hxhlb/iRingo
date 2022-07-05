@@ -1,7 +1,7 @@
 /*
 README:https://github.com/VirgilClyne/iRingo
 */
-const $ = new Env("TestFlight v1.1.4-response-beta");
+const $ = new Env("Private Relay v1.0.2-response");
 const URL = new URLs();
 const DataBase = {
 	"Location":{
@@ -24,6 +24,9 @@ const DataBase = {
 	"News":{
 		"Settings":{"Switch":true,"CountryCode":"US","newsPlusUser":true}
 	},
+	"Private_Relay":{
+		"Settings":{"Switch":true,"CountryCode":"US","canUse":true}
+	},
 	"TestFlight":{
 		"Settings":{"Switch":true,"CountryCode":"US","MultiAccount":false,"Universal":true}
 	},
@@ -37,113 +40,55 @@ const DataBase = {
 
 /***************** Processing *****************/
 !(async () => {
-	const { Settings, Caches = {}, Configs } = await setENV("iRingo", "TestFlight", DataBase);
+	const { Settings, Caches = {}, Configs } = await setENV("iRingo", "Private_Relay", DataBase);
 	if (Settings.Switch) {
 		let url = URL.parse($request.url);
 		$.log(`⚠ ${$.name}, url.path=${url.path}`);
 		switch (url.path) {
-			case "v1/properties/testflight":
-				break;
-			case "v1/session/authenticate":
-				let authenticate = JSON.parse($response.body);
-				if (Settings.MultiAccount) { // MultiAccount
-					$.log(`🚧 ${$.name}, 启用多账号支持`, "");
-					if (Caches?.data) { //有data
-						$.log(`🚧 ${$.name}, 有Caches.data`, "");
-						if (authenticate?.data?.accountId === Caches?.data?.accountId) { // Account ID相等，刷新缓存
-							$.log(`🚧 ${$.name}, Account ID相等，刷新缓存`, "");
-							authenticate.data["X-Request-Id"] = $request.headers["X-Request-Id"];
-							//authenticate.data.sessionId = $request.headers["X-Session-Id"];
-							authenticate.data["X-Session-Digest"] = $request.headers["X-Session-Digest"];
-							$.setjson({ ...Caches, ...authenticate }, "@iRingo.TestFlight.Caches");
-						} else { // Account ID不相等，Rewrite
-							$.log(`🚧 ${$.name}, Account ID不相等，覆盖accountId和sessionId`, "");
-							//authenticate.data = Caches.data;
-						}
-					} else { // Caches空
-						$.log(`🚧 ${$.name}, Caches空，写入`, "");
-						authenticate.data["X-Request-Id"] = $request.headers["X-Request-Id"];
-						//authenticate.data.sessionId = $request.headers["X-Session-Id"];
-						authenticate.data["X-Session-Digest"] = $request.headers["X-Session-Digest"];
-						$.setjson({ ...Caches, ...authenticate }, "@iRingo.TestFlight.Caches");
-					}
-				}
-				//$response.body = JSON.stringify(authenticate);
-				break;
-			case "v1/devices":
-			case "v1/devices/apns":
-			case "v1/devices/add":
-			case "v1/devices/remove":
+			case "v1/fetchAuthTokens":
 				break;
 			default:
 				if (/\/accounts\//i.test(url.path)) {
 					$.log(`🚧 ${$.name}, accounts`, "");
 					// app info mod
-					if (/\/apps/i.test(url.path)) {
-						$.log(`🚧 ${$.name}, /apps`, "");
-						if (/\/apps$/i.test(url.path)) {
-							$.log(`🚧 ${$.name}, /apps`, "");
-							if (Settings.Universal) { // 通用
-								$.log(`🚧 ${$.name}, 启用通用应用支持`, "");
-								let apps = JSON.parse($response.body);
-								if (apps.error === null) { // 数据无错误
-									$.log(`🚧 ${$.name}, 数据无错误`, "");
-									apps.data = apps.data.map(app => {
-										if (app.previouslyTested !== false) { // 不是前测试人员
-											$.log(`🚧 ${$.name}, 不是前测试人员`, "");
-											app.platforms = app.platforms.map(platform => {
-												platform.build = modBuild(platform.build);
-												return platform
-											});
-										}
-										return app
-									});
-								}
-								$response.body = JSON.stringify(apps);
-							}
-						} else if (/\/apps\/\d+\/builds\/\d+$/i.test(url.path)) {
-							$.log(`🚧 ${$.name}, /app/bulids`, "");
-							if (Settings.Universal) { // 通用
-								$.log(`🚧 ${$.name}, 启用通用应用支持`, "");
-								let builds = JSON.parse($response.body);
-								if (builds.error === null) { // 数据无错误
-									$.log(`🚧 ${$.name}, 数据无错误`, "");
-									// 当前Bulid
-									builds.data.currentBuild = modBuild(builds.data.currentBuild);
-									// Build列表
-									builds.data.builds = builds.data.builds.map(build => modBuild(build));
-								}
-								$response.body = JSON.stringify(builds);
-							}
-						} else if (/\/apps\/\d+\/platforms\/\w+\/trains$/i.test(url.path)) {
-							$.log(`🚧 ${$.name}, /app/platforms/trains`, "");
-						} else if (/\/apps\/\d+\/platforms\/\w+\/trains\/[\d.]+\/builds$/i.test(url.path)) {
-							$.log(`🚧 ${$.name}, /app/platforms/trains/builds`, "");
-							if (Settings.Universal) { // 通用
-								$.log(`🚧 ${$.name}, 启用通用应用支持`, "");
-								let builds = JSON.parse($response.body);
-								if (builds.error === null) { // 数据无错误
-									$.log(`🚧 ${$.name}, 数据无错误`, "");
-									// 当前Bulid
-									builds.data = builds.data.map(data => modBuild(data));
-								}
-								$response.body = JSON.stringify(builds);
-							}
-						} else if (/\/apps\/\d+\/builds\/\d+\/install$/i.test(url.path)) {
-							$.log(`🚧 ${$.name}, /app/bulids/install`, "");
+					if (/\/subscriptions\/features/i.test(url.path)) {
+						$.log(`🚧 ${$.name}, /subscriptions/features`, "");
+						$request.headers["X-MMe-Country"] = Settings.CountryCode;
+						if (/\/features$/i.test(url.path)) {
+							$.log(`🚧 ${$.name}, /features`, "");
+						} else if (/\/networking\.privacy\.subscriber$/i.test(url.path)) {
+							$.log(`🚧 ${$.name}, /networking.privacy.subscriber`, "");
+						} else if (/\/networking\.privacy\.attestation$/i.test(url.path)) {
+							$.log(`🚧 ${$.name}, /networking.privacy.attestation`, "");
+						} else if (/\/mail\.hide-my-email\.create$/i.test(url.path)) {
+							$.log(`🚧 ${$.name}, /mail.hide-my-email.create`, "");
+						} else if (/\/mail\.custom-domains\.transfer$/i.test(url.path)) {
+							$.log(`🚧 ${$.name}, /mail.custom-domains.transfer`, "");
 						} else $.log(`🚧 ${$.name}, unknown`, "");
 					};
-				} else if (/\/invites\//i.test(url.path)) {
-					$.log(`🚧 ${$.name}, invites`, "");
-					if (/\/app$/i.test(url.path)) {
-						$.log(`🚧 ${$.name}, /app`, "");
-					} else if (/\/accept$/i.test(url.path)) {
-						$.log(`🚧 ${$.name}, /accept`, "");
-					} else $.log(`🚧 ${$.name}, unknown`, "");
+				} else if (/\/devices\//i.test(url.path)) {
+					$.log(`🚧 ${$.name}, devices`, "");
+					// app info mod
+					if (/\/subscriptions\/features/i.test(url.path)) {
+						$.log(`🚧 ${$.name}, /subscriptions/features`, "");
+						$request.headers["X-MMe-Country"] = Settings.CountryCode;
+						if (/\/features$/i.test(url.path)) {
+							$.log(`🚧 ${$.name}, /features`, "");
+						} else if (/\/networking\.privacy\.subscriber$/i.test(url.path)) {
+							$.log(`🚧 ${$.name}, /networking.privacy.subscriber`, "");
+						} else if (/\/networking\.privacy\.attestation$/i.test(url.path)) {
+							$.log(`🚧 ${$.name}, /networking.privacy.attestation`, "");
+						} else if (/\/mail\.hide-my-email\.create$/i.test(url.path)) {
+							$.log(`🚧 ${$.name}, /mail.hide-my-email.create`, "");
+						} else if (/\/mail\.custom-domains\.transfer$/i.test(url.path)) {
+							$.log(`🚧 ${$.name}, /mail.custom-domains.transfer`, "");
+						} else $.log(`🚧 ${$.name}, unknown`, "");
+					};
 				};
 				break;
 		};
-		//$request.url = URL.stringify(url);
+		$.log(`🚧 ${$.name}, Private Relay`, `$response.body = ${$response.body}`, "");
+		$request.url = URL.stringify(url);
 	}
 })()
 	.catch((e) => $.logErr(e))
@@ -177,93 +122,9 @@ async function setENV(name, platform, database) {
 	let { Settings, Caches = {}, Configs } = await getENV(name, platform, database);
 	/***************** Prase *****************/
 	Settings.Switch = JSON.parse(Settings.Switch) // BoxJs字符串转Boolean
-	Settings.MultiAccount = JSON.parse(Settings.MultiAccount) // BoxJs字符串转Boolean
-	Settings.Universal = JSON.parse(Settings.Universal) // BoxJs字符串转Boolean
+	Settings.canUse = JSON.parse(Settings.canUse) // BoxJs字符串转Boolean
 	$.log(`🎉 ${$.name}, Set Environment Variables`, `Settings: ${typeof Settings}`, `Settings内容: ${JSON.stringify(Settings)}`, "");
 	return { Settings, Caches, Configs }
-};
-
-/**
- * mod Build
- * @author VirgilClyne
- * @param {Object} build - Build
- * @return {Object}
- */
-function modBuild(build) {
-	switch (build.platform || build.name) {
-		case "ios":
-			$.log(`🚧 ${$.name}, ios`, "");
-			build = Build(build);
-			break;
-		case "osx":
-			$.log(`🚧 ${$.name}, osx`, "");
-			if (build.macBuildCompatibility.runsOnAppleSilicon === true) { // 是苹果芯片
-				$.log(`🚧 ${$.name}, runsOnAppleSilicon`, "");
-				build = Build(build);
-			}
-			break;
-		case "appletvos":
-			$.log(`🚧 ${$.name}, appletvos`, "");
-			break;
-		default:
-			$.log(`🚧 ${$.name}, unknown platform: ${build.platform || build.name}`, "");
-			break;
-	};
-	return build
-
-	function Build(build) {
-		if (build.universal === true) {
-			build.compatible = true;
-			build.platformCompatible = true;
-			build.hardwareCompatible = true;
-			build.osCompatible = true;
-			if (build?.permission) build.permission = "install";
-			if (build?.deviceFamilyInfo) {
-				build.deviceFamilyInfo = [
-					{
-						"number": 1,
-						"name": "iOS",
-						"iconUrl": "https://itunesconnect-mr.itunes.apple.com/itc/img/device-icons/device_family_icon_1.png"
-					},
-					{
-						"number": 2,
-						"name": "iPad",
-						"iconUrl": "https://itunesconnect-mr.itunes.apple.com/itc/img/device-icons/device_family_icon_2.png"
-					},
-					{
-						"number": 3,
-						"name": "Apple TV",
-						"iconUrl": "https://itunesconnect-mr.itunes.apple.com/itc/img/device-icons/device_family_icon_3.png"
-					}
-				];
-			}
-			if (build?.compatibilityData?.compatibleDeviceFamilies) {
-				build.compatibilityData.compatibleDeviceFamilies = [
-					{
-						"name": "iPad",
-						"minimumSupportedDevice": null,
-						"unsupportedDevices": []
-					},
-					{
-						"name": "iPhone",
-						"minimumSupportedDevice": null,
-						"unsupportedDevices": []
-					},
-					{
-						"name": "iPod",
-						"minimumSupportedDevice": null,
-						"unsupportedDevices": []
-					},
-					{
-						"name": "Mac",
-						"minimumSupportedDevice": null,
-						"unsupportedDevices": []
-					}
-				];
-			}
-		};
-		return build
-	};
 };
 
 /***************** Env *****************/
